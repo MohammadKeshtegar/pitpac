@@ -10,8 +10,6 @@ from qtwidgets import Toggle
 from pyqttoast import Toast, ToastPreset, ToastPosition
 from PIL import Image
 
-myconfig = r"--psm 6 --oem 3"
-
 def load_theme_prefernence():
     app_settings = QSettings("Pitpac", "pitpac")
     return app_settings.value("mode", "dark")
@@ -43,7 +41,7 @@ class AboutWindow(QWidget):
                 owner: Mohammad Keshtegar<br>
                 If your faced any issues, feel free to ask me at:
                 <a style='font-size:14px' href='https://t.me/MohammadKeshtegar1401'>@MohammadKeshtegar1401</a>
-                Also you can find the source code <a href='' >here<a/>
+                Also you can find the source code <a href='https://github.com/MohammadKeshtegar/pitpac' >here<a/>
             </p>
         """
 
@@ -295,26 +293,27 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
-        # Create the main page
+        # main page
         self.main_page = QWidget()
         self.setup_main_page()
         self.stack.addWidget(self.main_page)
 
-        # Create the img2pdf page
+        # img2pdf page
         self.img2pdf_page = QWidget()
         self.setup_img2pdf_page()
         self.stack.addWidget(self.img2pdf_page)
 
-        # Create the pdf combiner page
+        # pdf combiner page
         self.pdf_combiner_page = QWidget()
         self.setup_pdf_combiner_page()
         self.stack.addWidget(self.pdf_combiner_page)
 
-        # Create the image resizer page
+        # image resizer page
         self.image_resizer_page = QWidget()
         self.setup_image_resizer_page()
         self.stack.addWidget(self.image_resizer_page)
 
+        # text from image page
         self.text_from_image_page = QWidget()
         self.setup_text_from_image_page()
         self.stack.addWidget(self.text_from_image_page)
@@ -371,6 +370,8 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         layout.addWidget(button_container, alignment=Qt.AlignCenter)
         layout.addStretch(1)
+
+        self.main_page.setLayout(layout)
 
     def setup_img2pdf_page(self):
         layout = QVBoxLayout(self.img2pdf_page)
@@ -515,7 +516,8 @@ class MainWindow(QMainWindow):
         self.pdf_files = []
 
     def setup_image_resizer_page(self):
-        layout = QVBoxLayout(self.image_resizer_page)
+        layout = QVBoxLayout()
+        self.image_resizer_page.setLayout(layout)
 
         self.back_button = QPushButton()
         if is_dark_theme():
@@ -585,10 +587,9 @@ class MainWindow(QMainWindow):
         else:
             self.apply_image_resizer_page_light_style()
 
-        self.setLayout(layout)
-
     def setup_text_from_image_page(self):
-        layout = QVBoxLayout(self.text_from_image_page)
+        layout = QVBoxLayout()
+        self.text_from_image_page.setLayout(layout)
 
         self.back_button = QPushButton()
         if is_dark_theme():
@@ -623,8 +624,6 @@ class MainWindow(QMainWindow):
             self.apply_text_from_image_dark_style()
         else:
             self.apply_text_from_image_light_style()
-
-        self.setLayout(layout)
 
     def show_main_page(self):
         self.stack.setCurrentWidget(self.main_page)
