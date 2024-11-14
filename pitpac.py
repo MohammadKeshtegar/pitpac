@@ -181,6 +181,9 @@ class SettingsWindow(QWidget):
         self.setStyleSheet("background-color: #f5f5f5")
         self.toggle_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
         self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
+        self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
+        self.ok_button.setStyleSheet(self.mainWindowObject.button_light_style)
+        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_light_style)
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
