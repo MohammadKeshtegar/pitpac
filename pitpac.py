@@ -1,18 +1,27 @@
+import os
 import io
 import sys
 import PyPDF4
 import img2pdf
 import pytesseract
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QProgressBar, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QComboBox
 from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator
 from PyQt5.QtCore import Qt, QSettings
 from qtwidgets import Toggle
 from pyqttoast import Toast, ToastPreset, ToastPosition
 from PIL import Image
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PATH_TO_FILE = os.getenv("PATH_TO_FILE")
+START_LOCATION = os.getenv("START_LOCATION")
 
 def load_theme_prefernence():
     app_settings = QSettings("Pitpac", "pitpac")
-    return app_settings.value("mode", "dark")
+    mode = app_settings.value("mode", "dark")
+    location = app_settings.value("location", START_LOCATION)
+    return mode, location
 
 def is_dark_theme():
     return settings.mode == "dark"
@@ -20,10 +29,11 @@ def is_dark_theme():
 def save_theme_preference():
     app_settings = QSettings("Pitpac", "pitpac")
     app_settings.setValue("mode", settings.mode)
+    app_settings.setValue("location", settings.location)
 
 class Settings:
     def __init__(self):
-        self.mode = load_theme_prefernence()
+        self.mode, self.location = load_theme_prefernence()
 
 settings = Settings()
 
@@ -85,6 +95,12 @@ class SettingsWindow(QWidget):
         # Toggle button
         layout = QVBoxLayout()
 
+        self.settings_options_widget = QWidget()
+        settings_options_layout = QVBoxLayout()
+        settings_options_layout.setContentsMargins(0, 0, 0, 0)
+        self.settings_options_widget.setLayout(settings_options_layout)
+
+        # Toggle
         self.toggle_widget = QWidget()
         toggle_layout = QHBoxLayout()
         self.toggle_widget.setLayout(toggle_layout)
@@ -98,11 +114,54 @@ class SettingsWindow(QWidget):
         toggle_layout.addWidget(self.toggle_label, alignment=Qt.AlignLeft)
         toggle_layout.addWidget(self.toggle, alignment=Qt.AlignRight)
 
-        layout.addWidget(self.toggle_widget, alignment=Qt.AlignTop)
+        # Location
+        self.location_widget = QWidget()
+        location_layout = QHBoxLayout()
+        self.location_widget.setLayout(location_layout)
 
+        self.location_field = QLineEdit(settings.location, self)
+        self.location_field.setMinimumWidth(200)
+        self.location_field.setMaximumWidth(400)
+        self.location_field.setFont(QFont("Arial", 12))
+
+        self.browse_location_button = QPushButton("Browse", self)
+        self.browse_location_button.clicked.connect(self.browse_location)
+
+        location_layout.addWidget(self.location_field, alignment=Qt.AlignmentFlag.AlignLeft)
+        location_layout.addWidget(self.browse_location_button, alignment=Qt.AlignmentFlag.AlignRight)
+
+        settings_options_layout.addWidget(self.toggle_widget)
+        settings_options_layout.addWidget(self.location_widget)
+
+        # Ok button
+        self.ok_widget = QWidget()
+        ok_layout = QHBoxLayout()
+        self.ok_widget.setLayout(ok_layout)
+
+        self.ok_button = QPushButton("Ok")
+        self.ok_button.setFixedWidth(100)
+        self.ok_button.clicked.connect(self.ok_click)
+
+        ok_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout.addWidget(self.settings_options_widget, alignment=Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(self.ok_widget, alignment=Qt.AlignmentFlag.AlignBottom)
+        
         if not self.layout():
             self.setLayout(layout)
         self.update_style()
+
+    def ok_click(self):
+        self.close()
+
+    def browse_location(self):
+        options = QFileDialog.Options() 
+        options |= QFileDialog.DontUseNativeDialog 
+        file_path = QFileDialog.getExistingDirectory(self, "Select Directory", settings.location, options=options) 
+        if file_path: 
+            self.location_field.setText(file_path)
+            settings.location = file_path
+            save_theme_preference()
     
     def update_style(self):
         if is_dark_theme():
@@ -113,10 +172,15 @@ class SettingsWindow(QWidget):
     def settings_dark_style(self):
         self.setStyleSheet("background-color: #1e1e1e")
         self.toggle_widget.setStyleSheet("background-color: #262626")
+        self.location_widget.setStyleSheet("background-color: #262626")
+        self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
+        self.ok_button.setStyleSheet(self.mainWindowObject.button_dark_style)
+        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_dark_style)
 
     def settings_light_style(self):
         self.setStyleSheet("background-color: #f5f5f5")
         self.toggle_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
+        self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
@@ -143,7 +207,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Pitpac")
         self.setGeometry(600, 250, 600, 600)
-        self.setWindowIcon(QIcon('app-icon.png'))
+        self.setWindowIcon(QIcon(f'{PATH_TO_FILE}app-icon.png'))
 
         self.button_dark_style = f"""
             QPushButton:disabled {{ color: #525252 }} 
@@ -378,9 +442,9 @@ class MainWindow(QMainWindow):
 
         self.back_button = QPushButton()
         if is_dark_theme():
-            self.back_button.setIcon(QIcon('arrow-left-dark.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
         else:
-            self.back_button.setIcon(QIcon('arrow-left-light.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
 
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -449,9 +513,9 @@ class MainWindow(QMainWindow):
 
         self.back_button = QPushButton()
         if is_dark_theme():
-            self.back_button.setIcon(QIcon('arrow-left-dark.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
         else:
-            self.back_button.setIcon(QIcon('arrow-left-light.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
         
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -521,9 +585,9 @@ class MainWindow(QMainWindow):
 
         self.back_button = QPushButton()
         if is_dark_theme():
-            self.back_button.setIcon(QIcon('arrow-left-dark.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
         else:
-            self.back_button.setIcon(QIcon('arrow-left-light.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
 
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -593,9 +657,9 @@ class MainWindow(QMainWindow):
 
         self.back_button = QPushButton()
         if is_dark_theme():
-            self.back_button.setIcon(QIcon('arrow-left-dark.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
         else:
-            self.back_button.setIcon(QIcon('arrow-left-light.svg'))
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
 
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -653,7 +717,7 @@ class MainWindow(QMainWindow):
     def open_pdf_dialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
-        files, _ = QFileDialog.getOpenFileNames(self, "Select PDFs", "", "PDF Files (*.pdf);;All Files (*)", options=options)
+        files, _ = QFileDialog.getOpenFileNames(self, "Select PDFs", settings.location, "PDF Files (*.pdf);;All Files (*)", options=options)
         if files:
             self.pdf_files = files
             self.display_selected_pdfs()
@@ -663,7 +727,7 @@ class MainWindow(QMainWindow):
 
     def open_image_dialog(self):
         options = QFileDialog.Options()
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Images", "", "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Images", settings.location, "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
         if files:
             self.image_files = files
             self.display_selected_images()
@@ -690,9 +754,9 @@ class MainWindow(QMainWindow):
 
             remove_button = QPushButton()
             if is_dark_theme():
-                remove_button.setIcon(QIcon("x-dark.svg"))
+                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             else:
-                remove_button.setIcon(QIcon("x-light.svg"))
+                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-light.svg"))
 
             remove_button.setFixedSize(30, 30)
             if is_dark_theme():
@@ -723,7 +787,7 @@ class MainWindow(QMainWindow):
 
     def add_pdf(self):
         options = QFileDialog.Options()
-        files, _ = QFileDialog.getOpenFileNames(self, "Add pdfs", "", "PDF Files (*.pdf);;All Files (*)", options=options)
+        files, _ = QFileDialog.getOpenFileNames(self, "Add pdfs", settings.location, "PDF Files (*.pdf);;All Files (*)", options=options)
         if files:
             self.pdf_files.extend(files)
             self.display_selected_pdfs()
@@ -737,7 +801,7 @@ class MainWindow(QMainWindow):
         self.button_pdf_combiner_save.setEnabled(False)
 
     def save_pdf_combiner(self):
-        save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf);;All Files (*)")
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF", settings.location, "PDF Files (*.pdf);;All Files (*)")
         if save_path:
             pdf_merger = PyPDF4.PdfFileMerger()
             for pdf in self.pdf_files:
@@ -755,7 +819,7 @@ class MainWindow(QMainWindow):
 
     def add_images(self):
         options = QFileDialog.Options()
-        files, _ = QFileDialog.getOpenFileNames(self, "Add Images", "", "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
+        files, _ = QFileDialog.getOpenFileNames(self, "Add Images", settings.location, "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
         if files:
             self.image_files.extend(files)
             self.display_selected_images()
@@ -786,9 +850,9 @@ class MainWindow(QMainWindow):
 
             remove_button = QPushButton()
             if is_dark_theme():
-                remove_button.setIcon(QIcon("x-dark.svg"))
+                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             else:
-                remove_button.setIcon(QIcon("x-light.svg"))
+                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-light.svg"))
 
             remove_button.setFixedSize(30, 30)
             if is_dark_theme():
@@ -826,7 +890,7 @@ class MainWindow(QMainWindow):
             self.button_img_to_pdf_add.setEnabled(False)
 
     def save_img_pdf(self):
-        save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF", "", "PDF Files (*.pdf);;All Files (*)")
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF", settings.location, "PDF Files (*.pdf);;All Files (*)")
         if save_path:
             with open(f"{save_path}.pdf", 'wb') as f:
                 f.write(img2pdf.convert(self.image_files))
@@ -845,7 +909,7 @@ class MainWindow(QMainWindow):
 
     def selectImage(self):
         options = QFileDialog.Options()
-        filename, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.jpeg *.gif)", options=options)
+        filename, _ = QFileDialog.getOpenFileName(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif)", options=options)
         if filename:
             if self.stack.currentWidget() == self.text_from_image_page:
                 self.extractText(filename)
@@ -912,7 +976,7 @@ class MainWindow(QMainWindow):
         if self.image:
             new_size = (int(self.width_input.text()), int(self.height_input.text()))
             resized_image = self.image.resize(new_size, Image.Resampling.LANCZOS)
-            save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "Image Files (*.png *.jpg *.jpeg *.gif);;All Files (*)")
+            save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif);;All Files (*)")
             if save_path:
                 resized_image.save(save_path)
 
