@@ -4,8 +4,8 @@ import sys
 import PyPDF4
 import img2pdf
 import pytesseract
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QComboBox
-from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QFontComboBox, QSpinBox
+from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator, QFontDatabase
 from PyQt5.QtCore import Qt, QSettings
 from qtwidgets import Toggle
 from pyqttoast import Toast, ToastPreset, ToastPosition
@@ -16,6 +16,8 @@ load_dotenv()
 
 PATH_TO_FILE = os.getenv("PATH_TO_FILE")
 START_LOCATION = os.getenv("START_LOCATION")
+FONT_FAMILY = "Noto sans"
+FONT_SIZE = 12
 
 def load_theme_prefernence():
     app_settings = QSettings("Pitpac", "pitpac")
@@ -47,7 +49,7 @@ class AboutWindow(QWidget):
         self.about_text = """
             <p style='font-size:16px'>Pitpac is a desktop application allows you to convert images to pdf files or cobine pdf files into one pdf file.</p>
             <p style='font-size:14px; line-height:1.2'>
-                Application version: 1.0.0<br>
+                Application version: 2.0.0<br>
                 owner: Mohammad Keshtegar<br>
                 If your faced any issues, feel free to ask me at:
                 <a style='font-size:14px' href='https://t.me/MohammadKeshtegar1401'>@MohammadKeshtegar1401</a>
@@ -91,8 +93,7 @@ class SettingsWindow(QWidget):
         
         self.initUI()
 
-    def initUI(self):        
-        # Toggle button
+    def initUI(self):
         layout = QVBoxLayout()
 
         self.settings_options_widget = QWidget()
@@ -133,6 +134,42 @@ class SettingsWindow(QWidget):
         settings_options_layout.addWidget(self.toggle_widget)
         settings_options_layout.addWidget(self.location_widget)
 
+        # Font family
+        self.font_family_widget = QWidget()
+        font_family_layout = QHBoxLayout()
+        self.font_family_widget.setLayout(font_family_layout)
+
+        self.font_label = QLabel("Select Font", self)
+        self.font_combo = QFontComboBox(self)
+
+        font_db = QFontDatabase()
+        for family in font_db.families():
+            self.font_combo.addItem(family)
+ 
+        self.font_combo.currentFontChanged.connect(self.set_font)
+        
+        font_family_layout.addWidget(self.font_label, alignment=Qt.AlignLeft)
+        font_family_layout.addWidget(self.font_combo, alignment=Qt.AlignRight)
+
+        settings_options_layout.addWidget(self.font_family_widget)
+
+        # Font size
+        self.font_size_widget = QWidget()
+        font_size_layout = QHBoxLayout()
+        self.font_size_widget.setLayout(font_size_layout)
+
+        self.font_size_label = QLabel("Font Size", self)
+        self.font_size_spin = QSpinBox(self)
+        self.font_size_spin.setRange(6, 72) # Example range 
+        self.font_size_spin.setValue(12) # Default value 
+        self.font_size_spin.setFixedWidth(60)
+        self.font_size_spin.valueChanged.connect(self.set_font_size)
+
+        font_size_layout.addWidget(self.font_size_label, alignment=Qt.AlignLeft)
+        font_size_layout.addWidget(self.font_size_spin, alignment=Qt.AlignRight)
+        
+        settings_options_layout.addWidget(self.font_size_widget)
+
         # Ok button
         self.ok_widget = QWidget()
         ok_layout = QHBoxLayout()
@@ -146,18 +183,24 @@ class SettingsWindow(QWidget):
 
         layout.addWidget(self.settings_options_widget, alignment=Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self.ok_widget, alignment=Qt.AlignmentFlag.AlignBottom)
-        
+
         if not self.layout():
             self.setLayout(layout)
         self.update_style()
+
+    def set_font(self, font):
+        self.selected_font = font.family()
+
+    def set_font_size(self, size):
+        self.selected_font_size = size
 
     def ok_click(self):
         self.close()
 
     def browse_location(self):
-        options = QFileDialog.Options() 
+        options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog 
-        file_path = QFileDialog.getExistingDirectory(self, "Select Directory", settings.location, options=options) 
+        file_path = QFileDialog.getExistingDirectory(self, "Select Directory", settings.location, options=options)
         if file_path: 
             self.location_field.setText(file_path)
             settings.location = file_path
@@ -174,16 +217,24 @@ class SettingsWindow(QWidget):
         self.toggle_widget.setStyleSheet("background-color: #262626")
         self.location_widget.setStyleSheet("background-color: #262626")
         self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_dark_style)
         self.browse_location_button.setStyleSheet(self.mainWindowObject.button_dark_style)
+        self.font_family_widget.setStyleSheet("background-color: #262626")
+        self.font_size_widget.setStyleSheet("background-color: #262626")
+        self.font_combo.setStyleSheet("background-color: #3e3e3e")
+        self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
+        self.ok_button.setStyleSheet(self.mainWindowObject.button_dark_style)
 
     def settings_light_style(self):
         self.setStyleSheet("background-color: #f5f5f5")
         self.toggle_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
         self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
         self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_light_style)
         self.browse_location_button.setStyleSheet(self.mainWindowObject.button_light_style)
+        self.font_family_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
+        self.font_size_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
+        self.font_combo.setStyleSheet("background-color: #e5e5e5")
+        self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
+        self.ok_button.setStyleSheet(self.mainWindowObject.button_light_style)
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
