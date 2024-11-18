@@ -13,7 +13,7 @@ class AboutWindow(QWidget):
         self.about_text = """
             <p style='font-size:16px'>Pitpac is a desktop application allows you to convert images to pdf files or cobine pdf files into one pdf file.</p>
             <p style='font-size:14px; line-height:1.2'>
-                Version: 2.1.0<br>
+                Version: 2.2.0<br>
                 Owner: Mohammad Keshtegar<br>
                 Also you can find the source code <a href='https://github.com/MohammadKeshtegar/pitpac' >here</a>
                 <br />
