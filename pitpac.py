@@ -1,276 +1,46 @@
-import os
 import io
 import sys
 import PyPDF4
 import img2pdf
 import pytesseract
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QFontComboBox, QSpinBox
-from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator, QFontDatabase
-from PyQt5.QtCore import Qt, QSettings
-from qtwidgets import Toggle
+from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator
+from PyQt5.QtCore import Qt
 from pyqttoast import Toast, ToastPreset, ToastPosition
 from PIL import Image
-from dotenv import load_dotenv
 
-load_dotenv()
+from about import AboutWindow
+from assets import is_dark_theme, settings, PATH_TO_FILE
+from settings import SettingsWindow
 
-PATH_TO_FILE = os.getenv("PATH_TO_FILE")
-START_LOCATION = os.getenv("START_LOCATION")
+class ImageDisplayWindow(QMainWindow): 
+    def __init__(self, parent=None): 
+        super().__init__(parent) 
+        
+        self.setWindowTitle("Resized Image") 
+        self.setGeometry(600, 250, 600, 600)
+        self.setMaximumWidth(800)
+        self.setMaximumHeight(800)
 
-def is_dark_theme():
-    return settings.mode == "dark"
+        self.resized_image_scroll_area = QScrollArea(self)
+        self.resized_image_scroll_area.setWidgetResizable(True)
+        
+        self.image_label = QLabel(self) 
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter) 
+        self.image_label.setStyleSheet("border: 1px solid #111111") 
 
-def load_theme_prefernence():
-    app_settings = QSettings("Pitpac", "pitpac")
-    mode = app_settings.value("mode", "dark")
-    location = app_settings.value("location", START_LOCATION)
-    font_family = app_settings.value("font_family", "Noto Sans")
-    font_size = app_settings.value("font_size", 12)
-    return mode, location, font_family, font_size
-
-def save_theme_preference():
-    app_settings = QSettings("Pitpac", "pitpac")
-    app_settings.setValue("mode", settings.mode)
-    app_settings.setValue("location", settings.location)
-    app_settings.setValue("font_family", settings.font_family)
-    app_settings.setValue("font_size", settings.font_size)
-
-class Settings:
-    def __init__(self):
-        self.mode, self.location, self.font_family, self.font_size = load_theme_prefernence()
-
-settings = Settings()
-
-class AboutWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("About Pitpac")
-        self.setGeometry(800, 300, 600, 300)
-
-        self.about_text = """
-            <p style='font-size:16px'>Pitpac is a desktop application allows you to convert images to pdf files or cobine pdf files into one pdf file.</p>
-            <p style='font-size:14px; line-height:1.2'>
-                Version: 2.1.0<br>
-                Owner: Mohammad Keshtegar<br>
-                Also you can find the source code <a href='https://github.com/MohammadKeshtegar/pitpac' >here</a>
-                <br /> 
-                <br /> 
-                If your faced any issues or have any question, feel free to ask me at:
-                <a style='font-size:14px' href='https://t.me/MohammadKeshtegar1401'>@MohammadKeshtegar1401</a>
-            </p>
-        """
+        self.resized_image_scroll_area.setWidget(self.image_label)
 
         layout = QVBoxLayout()
-        label = QLabel(self.about_text, self)
-
-        label.setTextFormat(Qt.RichText)
-        label.setOpenExternalLinks(True)
-        label.setWordWrap(True)
-        label.setFixedWidth(500)
-
-        ok_button = QPushButton("Ok", self)
-        ok_button.clicked.connect(self.close_about)
-
-        layout.addStretch(1)
-        layout.addWidget(label, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
-
-        layout.addWidget(ok_button, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        if is_dark_theme():
-            self.apply_about_dark_style()
-        else:
-            self.apply_about_light_style()
-
-        self.setLayout(layout)
-
-    def apply_about_dark_style(self):
-        self.setStyleSheet("background-color: #222222")
-
-    def apply_about_light_style(self):
-        self.setStyleSheet("background-color: #f5f5f5; color: #222222")
-
-    def close_about(self):
-        self.close()
-
-class SettingsWindow(QWidget):
-    def __init__(self, mainWindowObject, aboutWindowObject):
-        super().__init__()
-
-        self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 400, 400)
-        self.mainWindowObject = mainWindowObject
-        self.aboutWindowObject = aboutWindowObject
+        layout.addWidget(self.resized_image_scroll_area)
         
-        self.initUI()
-
-    def initUI(self):
-        layout = QVBoxLayout()
-
-        self.settings_options_widget = QWidget()
-        settings_options_layout = QVBoxLayout()
-        settings_options_layout.setContentsMargins(0, 0, 0, 0)
-        self.settings_options_widget.setLayout(settings_options_layout)
-
-        # Toggle
-        self.toggle_widget = QWidget()
-        toggle_layout = QHBoxLayout()
-        self.toggle_widget.setLayout(toggle_layout)
-
-        self.toggle_label = QLabel(f"{settings.mode.title()} Mode", self)
-        self.toggle = Toggle()
-
-        self.toggle.setChecked(True if is_dark_theme() else False)
-        self.toggle.stateChanged.connect(self.switch_mode)
-
-        toggle_layout.addWidget(self.toggle_label, alignment=Qt.AlignLeft)
-        toggle_layout.addWidget(self.toggle, alignment=Qt.AlignRight)
-
-        # Location
-        self.location_widget = QWidget()
-        location_layout = QHBoxLayout()
-        self.location_widget.setLayout(location_layout)
-
-        self.location_field = QLineEdit(settings.location, self)
-        self.location_field.setMinimumWidth(200)
-        self.location_field.setMaximumWidth(400)
-        self.location_field.setFont(QFont("Arial", 12))
-
-        self.browse_location_button = QPushButton("Browse", self)
-        self.browse_location_button.clicked.connect(self.browse_location)
-
-        location_layout.addWidget(self.location_field, alignment=Qt.AlignmentFlag.AlignLeft)
-        location_layout.addWidget(self.browse_location_button, alignment=Qt.AlignmentFlag.AlignRight)
-
-        settings_options_layout.addWidget(self.toggle_widget)
-        settings_options_layout.addWidget(self.location_widget)
-
-        # Font family
-        self.font_family_widget = QWidget()
-        font_family_layout = QHBoxLayout()
-        self.font_family_widget.setLayout(font_family_layout)
-
-        self.font_label = QLabel("Select Font", self)
-        self.font_combo = QFontComboBox(self)
-
-        font_db = QFontDatabase()
-        for family in font_db.families():
-            self.font_combo.addItem(family)
- 
-        self.font_combo.currentFontChanged.connect(self.set_font)
+        container = QWidget() 
+        container.setLayout(layout) 
+        self.setCentralWidget(container) 
         
-        font_family_layout.addWidget(self.font_label, alignment=Qt.AlignLeft)
-        font_family_layout.addWidget(self.font_combo, alignment=Qt.AlignRight)
-
-        settings_options_layout.addWidget(self.font_family_widget)
-
-        # Font size
-        self.font_size_widget = QWidget()
-        font_size_layout = QHBoxLayout()
-        self.font_size_widget.setLayout(font_size_layout)
-
-        self.font_size_label = QLabel("Font Size", self)
-        self.font_size_spin = QSpinBox(self)
-        self.font_size_spin.setRange(6, 72) # Example range 
-        self.font_size_spin.setValue(12) # Default value 
-        self.font_size_spin.setFixedWidth(60)
-        self.font_size_spin.valueChanged.connect(self.set_font_size)
-
-        font_size_layout.addWidget(self.font_size_label, alignment=Qt.AlignLeft)
-        font_size_layout.addWidget(self.font_size_spin, alignment=Qt.AlignRight)
-        
-        settings_options_layout.addWidget(self.font_size_widget)
-
-        # Ok button
-        self.ok_widget = QWidget()
-        ok_layout = QHBoxLayout()
-        self.ok_widget.setLayout(ok_layout)
-
-        self.ok_button = QPushButton("Ok")
-        self.ok_button.setFixedWidth(100)
-        self.ok_button.clicked.connect(self.ok_click)
-
-        ok_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
-
-        layout.addWidget(self.settings_options_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(self.ok_widget, alignment=Qt.AlignmentFlag.AlignBottom)
-
-        if not self.layout():
-            self.setLayout(layout)
-        self.update_style()
-
-    # def mode_text(self):
-    #     return settings.mode.title()
-
-    def set_font(self, font):
-        self.selected_font = font.family()
-
-    def set_font_size(self, size):
-        self.selected_font_size = size
-
-    def ok_click(self):
-        self.close()
-
-    def browse_location(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog 
-        file_path = QFileDialog.getExistingDirectory(self, "Select Directory", settings.location, options=options)
-        if file_path: 
-            self.location_field.setText(file_path)
-            settings.location = file_path
-            save_theme_preference()
-    
-    def update_style(self):
-        if is_dark_theme():
-            self.settings_dark_style()
-        else:
-            self.settings_light_style()
-
-    def settings_dark_style(self):
-        self.setStyleSheet("background-color: #1e1e1e")
-        self.toggle_widget.setStyleSheet("background-color: #262626")
-        self.toggle_label.setText("Dark Mode")
-        self.location_widget.setStyleSheet("background-color: #262626")
-        self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_dark_style)
-        self.font_family_widget.setStyleSheet("background-color: #262626")
-        self.font_size_widget.setStyleSheet("background-color: #262626")
-        self.font_combo.setStyleSheet("background-color: #3e3e3e")
-        self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_dark_style)
-
-    def settings_light_style(self):
-        self.setStyleSheet("background-color: #f5f5f5")
-        self.toggle_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
-        self.toggle_label.setText("Light Mode")
-        self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
-        self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
-        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_light_style)
-        self.font_family_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
-        self.font_size_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
-        self.font_combo.setStyleSheet("background-color: #e5e5e5")
-        self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_light_style)
-
-    def switch_mode(self, state):
-        settings.mode = "dark" if state == 2 else "light"
-        
-        if is_dark_theme():
-            if self.aboutWindowObject:
-                self.aboutWindowObject.apply_about_dark_style()
-            self.mainWindowObject.apply_main_dark_style()
-            self.settings_dark_style()
-            save_theme_preference()
-        else:
-            if self.aboutWindowObject:
-                self.aboutWindowObject.apply_about_light_style()
-            self.mainWindowObject.apply_main_light_style()
-            self.settings_light_style()
-            save_theme_preference()
-
-        self.update_style()
-        self.mainWindowObject.initUI()
+    def display_image(self, pixmap): 
+        self.image_label.setPixmap(pixmap) 
+        self.image_label.adjustSize()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -324,6 +94,8 @@ class MainWindow(QMainWindow):
 
         self.button_size = 400
         self.initUI()
+        self.image_display_window = ImageDisplayWindow()
+
 
         if is_dark_theme():
             self.apply_main_dark_style()
@@ -394,11 +166,10 @@ class MainWindow(QMainWindow):
         self.button_pdf_combiner_remove_all.setStyleSheet(self.button_light_style)
         self.button_pdf_combiner_save.setStyleSheet(self.button_light_style)
 
+    # Image resizer
     def apply_image_resizer_page_dark_style(self):
-        self.image_scroll_area.setStyleSheet(self.scroll_area_dark_style)
         self.image_resizer_page.setStyleSheet("background-color: #262626")
         self.back_button.setStyleSheet(self.button_dark_style)
-        self.image_label.setStyleSheet("background-color: #333333")
         self.width_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
         self.height_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
         self.save_resized_image_button.setStyleSheet(self.button_dark_style)
@@ -406,16 +177,15 @@ class MainWindow(QMainWindow):
         self.resized_image_scroll_area.setStyleSheet(self.scroll_area_dark_style)
 
     def apply_image_resizer_page_light_style(self):
-        self.image_scroll_area.setStyleSheet(self.scroll_area_light_style)
         self.image_resizer_page.setStyleSheet("background-color: #e5e5e5")
         self.back_button.setStyleSheet(self.button_light_style)
-        self.image_label.setStyleSheet("background-color: #a5a5a5")
         self.width_input.setStyleSheet("background-color: #a5a5a5")
         self.height_input.setStyleSheet("background-color: #a5a5a5")
         self.save_resized_image_button.setStyleSheet(self.button_light_style)
         self.select_image_button.setStyleSheet(self.button_light_style)
         self.resized_image_scroll_area.setStyleSheet(self.scroll_area_light_style)
 
+    # Text from image
     def apply_text_from_image_dark_style(self):
         self.text_from_image_page.setStyleSheet("background-color: #262626")
         self.text_from_image_button.setStyleSheet(self.button_dark_style)
@@ -673,19 +443,8 @@ class MainWindow(QMainWindow):
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
 
-        self.image_scroll_area = QScrollArea(self)
-        self.image_scroll_area.setWidgetResizable(True)
-
-        self.image_label = QLabel()
-        self.image_label.setStyleSheet("border: 1px solid #111111")
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.image_scroll_area.setWidget(self.image_label)
-
-        # Create another scroll area for resized images
         self.resized_image_scroll_area = QScrollArea(self)
         self.resized_image_scroll_area.setWidgetResizable(True)
-        self.resized_image_scroll_area.setVisible(False)
 
         self.resized_images_widget = QWidget()
         self.resized_images_layout = QVBoxLayout(self.resized_images_widget)
@@ -738,10 +497,9 @@ class MainWindow(QMainWindow):
 
         # Add widgets to the main layout
         layout.addWidget(self.back_button)
-        layout.addWidget(self.image_scroll_area)
+        layout.addWidget(self.resized_image_scroll_area)
         layout.addLayout(width_height_buttons_layout)
         layout.addWidget(self.aspect_ratio_check)
-        layout.addWidget(self.resized_image_scroll_area)
 
         if is_dark_theme():
             self.apply_image_resizer_page_dark_style()
@@ -1021,16 +779,17 @@ class MainWindow(QMainWindow):
                 else:
                     self.display_selected_images(self.resized_images_layout)
                 
-                self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames]
-                self.width_input.setText(str(self.images[0].width))
-                self.width_input.setEnabled(True)
-                self.height_input.setText(str(self.images[0].height))
-                self.height_input.setEnabled(True)
-                self.updateImage()
+                    self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames]
+                    self.width_input.setText(str(self.images[0].width))
+                    self.width_input.setEnabled(True)
+                    self.height_input.setText(str(self.images[0].height))
+                    self.height_input.setEnabled(True)
+
+                    self.updateImage()
 
     def updateImage(self, width=None, height=None):
         if self.images:
-            first_image = self.images[0]  # Get the first selected image
+            first_image = self.images[0]
             width_input_text = self.width_input.text()
             height_input_text = self.height_input.text()
 
@@ -1056,11 +815,9 @@ class MainWindow(QMainWindow):
             qimage.loadFromData(image_bytes.read())
 
             pixmap = QPixmap.fromImage(qimage)
-            self.image_label.setPixmap(pixmap)
-            self.image_label.adjustSize()
 
-            if self.image_scroll_area:
-                self.image_scroll_area.ensureWidgetVisible(self.image_label)
+            self.image_display_window.display_image(pixmap)
+            self.image_display_window.show()
 
     def width_input_changed(self, text):
         if text == '':
