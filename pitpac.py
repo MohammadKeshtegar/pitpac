@@ -3,7 +3,7 @@ import sys
 import PyPDF4
 import img2pdf
 import pytesseract
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QFontComboBox, QSpinBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit
 from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator
 from PyQt5.QtCore import Qt
 from pyqttoast import Toast, ToastPreset, ToastPosition
@@ -12,35 +12,7 @@ from PIL import Image
 from about import AboutWindow
 from assets import is_dark_theme, settings, PATH_TO_FILE
 from settings import SettingsWindow
-
-class ImageDisplayWindow(QMainWindow): 
-    def __init__(self, parent=None): 
-        super().__init__(parent) 
-        
-        self.setWindowTitle("Resized Image") 
-        self.setGeometry(600, 250, 600, 600)
-        self.setMaximumWidth(800)
-        self.setMaximumHeight(800)
-
-        self.resized_image_scroll_area = QScrollArea(self)
-        self.resized_image_scroll_area.setWidgetResizable(True)
-        
-        self.image_label = QLabel(self) 
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter) 
-        self.image_label.setStyleSheet("border: 1px solid #111111") 
-
-        self.resized_image_scroll_area.setWidget(self.image_label)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.resized_image_scroll_area)
-        
-        container = QWidget() 
-        container.setLayout(layout) 
-        self.setCentralWidget(container) 
-        
-    def display_image(self, pixmap): 
-        self.image_label.setPixmap(pixmap) 
-        self.image_label.adjustSize()
+from image_preview import ImageDisplayWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -766,7 +738,7 @@ class MainWindow(QMainWindow):
 
     def selectImage(self):
         options = QFileDialog.Options()
-        filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif)", options=options)
+        filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options)
         if filenames:
             if self.stack.currentWidget() == self.text_from_image_page:
                 self.extractText(filenames)
@@ -780,6 +752,7 @@ class MainWindow(QMainWindow):
                     self.display_selected_images(self.resized_images_layout)
                 
                     self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames]
+                    self.original_aspect_ratio = self.images[0].width / self.images[0].height
                     self.width_input.setText(str(self.images[0].width))
                     self.width_input.setEnabled(True)
                     self.height_input.setText(str(self.images[0].height))
@@ -798,26 +771,28 @@ class MainWindow(QMainWindow):
             keep_aspect_ratio = self.aspect_ratio_check.isChecked()
 
             if keep_aspect_ratio:
-                original_aspect_ratio = first_image.width / first_image.height
-                if new_width / original_aspect_ratio > new_height:
-                    new_width = int(new_height * original_aspect_ratio)
+                if new_width / self.original_aspect_ratio > new_height:
+                    new_width = int(new_height * self.original_aspect_ratio)
                 else:
-                    new_height = int(new_width / original_aspect_ratio)
+                    new_height = int(new_width / self.original_aspect_ratio)
 
-            new_size = (int(new_width), int(new_height))
-            resized_image = first_image.resize(new_size, Image.Resampling.LANCZOS)
+            if new_width <= 1 or new_height <= 1:
+                pass
+            else:
+                new_size = (int(new_width), int(new_height))
+                resized_image = first_image.resize(new_size, Image.Resampling.LANCZOS)
 
-            image_bytes = io.BytesIO()
-            resized_image.save(image_bytes, format="PNG")
-            image_bytes.seek(0)
+                image_bytes = io.BytesIO()
+                resized_image.save(image_bytes, format="PNG")
+                image_bytes.seek(0)
 
-            qimage = QImage()
-            qimage.loadFromData(image_bytes.read())
+                qimage = QImage()
+                qimage.loadFromData(image_bytes.read())
 
-            pixmap = QPixmap.fromImage(qimage)
+                pixmap = QPixmap.fromImage(qimage)
 
-            self.image_display_window.display_image(pixmap)
-            self.image_display_window.show()
+                self.image_display_window.display_image(pixmap)
+                self.image_display_window.show()
 
     def width_input_changed(self, text):
         if text == '':
@@ -825,9 +800,16 @@ class MainWindow(QMainWindow):
             return self.image
         else:
             self.image = self.images_ref
+            if self.aspect_ratio_check.isChecked() and self.image:
+                self.height_input.blockSignals(True)
+
+                if self.images[0].width > self.images[0].height:
+                    self.height_input.setText(str(round(int(text) / self.original_aspect_ratio)))
+                else:
+                    self.height_input.setText(str(round(int(text) * self.original_aspect_ratio)))
+
+                self.height_input.blockSignals(False)
             self.updateImage(width=int(text))
-            if self.aspect_ratio_check.isChecked():
-                self.height_input.setText(text)
 
     def height_input_changed(self, text):
         if text == '':
@@ -835,9 +817,16 @@ class MainWindow(QMainWindow):
             return self.image
         else:
             self.image = self.images_ref
+            if self.aspect_ratio_check.isChecked() and self.image:
+                self.width_input.blockSignals(True)
+
+                if self.images[0].width > self.images[0].height:
+                    self.width_input.setText(str(round(int(text) * self.original_aspect_ratio)))
+                else:
+                    self.width_input.setText(str(round(int(text) / self.original_aspect_ratio)))
+                
+                self.width_input.blockSignals(False)
             self.updateImage(height=int(text))
-            if self.aspect_ratio_check.isChecked():
-                self.width_input.setText(text)
 
     def save_resized_image(self):
         if self.image:
