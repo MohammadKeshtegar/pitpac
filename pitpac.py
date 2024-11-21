@@ -324,7 +324,7 @@ class MainWindow(QMainWindow):
         else:
             self.apply_img_to_pdf_light_style()
 
-        self.button_img_to_pdf_select.clicked.connect(self.open_image_dialog)
+        self.button_img_to_pdf_select.clicked.connect(self.selectImage)
         self.button_img_to_pdf_add.clicked.connect(self.add_images)
         self.button_img_to_pdf_remove_all.clicked.connect(self.remove_all_images)
         self.button_img_to_pdf_save.clicked.connect(self.save_img_pdf)
@@ -552,16 +552,6 @@ class MainWindow(QMainWindow):
             self.button_pdf_combiner_remove_all.setEnabled(True)
             self.button_pdf_combiner_add.setEnabled(True)
 
-    def open_image_dialog(self):
-        options = QFileDialog.Options()
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Images", settings.location, "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
-        if files:
-            self.image_files = files
-            self.display_selected_images(self.image_layout)
-            self.button_img_to_pdf_save.setEnabled(True)
-            self.button_img_to_pdf_remove_all.setEnabled(True)
-            self.button_img_to_pdf_add.setEnabled(True)
-
     def display_selected_pdfs(self):    
         for i in reversed(range(self.pdf_layout.count())):
             widget_to_remove = self.pdf_layout.itemAt(i).widget()
@@ -689,7 +679,7 @@ class MainWindow(QMainWindow):
             else:
                 remove_button.setStyleSheet(self.remove_button_light_style)
 
-            remove_button.clicked.connect(lambda _, f=file: self.remove_image(f))
+            remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))
             row_layout.addWidget(remove_button)
 
             label = QLabel()
@@ -710,9 +700,9 @@ class MainWindow(QMainWindow):
             layout.addWidget(row_widget)
             layout.setAlignment(Qt.AlignTop)
 
-    def remove_image(self, file):
+    def remove_image(self, layout, file):
         self.image_files.remove(file)
-        self.display_selected_images(self.image_layout)
+        self.display_selected_images(layout)
         if not self.image_files:
             self.button_img_to_pdf_save.setEnabled(False)
             self.button_img_to_pdf_remove_all.setEnabled(False)
@@ -742,6 +732,12 @@ class MainWindow(QMainWindow):
         if filenames:
             if self.stack.currentWidget() == self.text_from_image_page:
                 self.extractText(filenames)
+            elif self.stack.currentWidget() == self.img2pdf_page:
+                self.image_files = filenames
+                self.display_selected_images(self.image_layout)
+                self.button_img_to_pdf_save.setEnabled(True)
+                self.button_img_to_pdf_remove_all.setEnabled(True)
+                self.button_img_to_pdf_add.setEnabled(True)
             else:
                 self.resized_image_scroll_area.setVisible(True)
                 self.image_files = filenames
