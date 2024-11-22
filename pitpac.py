@@ -3,7 +3,7 @@ import sys
 import PyPDF4
 import img2pdf
 import pytesseract
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QScrollArea, QHBoxLayout, QStackedWidget, QLineEdit, QCheckBox, QTextEdit, QComboBox
 from PyQt5.QtGui import QPixmap, QIcon, QFont, QImage, QIntValidator
 from PyQt5.QtCore import Qt
 from pyqttoast import Toast, ToastPreset, ToastPosition
@@ -63,6 +63,16 @@ class MainWindow(QMainWindow):
             QPushButton {{ background-color: #fff; border: 1px solid #a3a3a3 }} 
             QPushButton:hover {{ background-color: #4464e6 }}
         """
+
+        self.combobox_dark_style = """ 
+            QComboBox:hover { background-color: #313131 }
+            QComboBox::item:hover { background-color: #646464 }
+        """ 
+
+        self.combobox_light_style = """ 
+            QComboBox:hover { background-color: #313131 }
+            QComboBox::item:hover { background-color: #646464 }
+        """ 
 
         self.button_size = 400
         self.initUI()
@@ -166,6 +176,8 @@ class MainWindow(QMainWindow):
         self.textEdit.setStyleSheet("background-color: #212121")
         self.select_image_to_extract_button.setStyleSheet(self.button_dark_style)
         self.copy_button.setStyleSheet(self.button_dark_style)
+        self.save_text_button.setStyleSheet(self.button_dark_style)
+        self.select_language_menu.setStyleSheet(self.combobox_dark_style)
 
     def apply_text_from_image_light_style(self):
         self.text_from_image_page.setStyleSheet("background-color: #e5e5e5")
@@ -175,6 +187,7 @@ class MainWindow(QMainWindow):
         self.textEdit.setStyleSheet("background-color: #a5a5a5")
         self.select_image_to_extract_button.setStyleSheet(self.button_light_style)
         self.copy_button.setStyleSheet(self.button_light_style)
+        self.save_text_button.setStyleSheet(self.button_light_style)
 
     def initUI(self):
         self.stack = QStackedWidget()
@@ -264,10 +277,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(self.img2pdf_page)
 
         self.back_button = QPushButton()
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
+        self.back_button_style()
 
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -335,10 +345,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(self.pdf_combiner_page)
 
         self.back_button = QPushButton()
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
+        self.back_button_style()
         
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -407,10 +414,7 @@ class MainWindow(QMainWindow):
         self.image_resizer_page.setLayout(layout)
 
         self.back_button = QPushButton()
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
+        self.back_button_style()
 
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
@@ -483,13 +487,14 @@ class MainWindow(QMainWindow):
         self.text_from_image_page.setLayout(layout)
 
         self.back_button = QPushButton()
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
-
+        self.back_button_style()
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
+
+        self.text_container = QWidget()
+        self.text_container_layout = QVBoxLayout()
+        self.text_container_layout.setContentsMargins(0, 0, 0, 0)
+        self.text_container.setLayout(self.text_container_layout)
 
         self.text_scroll_area = QScrollArea()
         self.text_scroll_area.setWidgetResizable(True)
@@ -497,24 +502,69 @@ class MainWindow(QMainWindow):
         font = QFont("Arial", 12)
         self.textEdit = QTextEdit(self)
         self.textEdit.setFont(font)
-        self.text_scroll_area.setWidget(self.textEdit)
         self.textEdit.setReadOnly(True)
 
-        self.copy_button = QPushButton("Copy")
+        self.text_widget = QWidget()
+        self.text_layout = QVBoxLayout(self.text_widget)
+        self.text_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.copy_button_widget = QWidget()
+        self.copy_button_layout = QHBoxLayout()
+        self.copy_button_layout.setContentsMargins(5,5,5,3)
+        self.copy_button_layout.addStretch()
+        self.copy_button_widget.setLayout(self.copy_button_layout)
+        self.copy_button = QPushButton("Copy", self.textEdit)
         self.copy_button.clicked.connect(self.copyText)
+        self.copy_button_layout.addWidget(self.copy_button)
+        
+        self.text_layout.addWidget(self.copy_button_widget)
+        self.text_layout.addWidget(self.textEdit)
+
+        self.text_scroll_area.setWidget(self.text_widget)
+        self.text_container_layout.addWidget(self.text_scroll_area)
+
+        self.buttons_widget = QWidget()
+        buttons_layout = QHBoxLayout()
+        self.buttons_widget.setLayout(buttons_layout)
 
         self.select_image_to_extract_button = QPushButton("Select image", self)
         self.select_image_to_extract_button.clicked.connect(self.selectImage)
 
+        self.select_language_menu = QComboBox(self)
+        self.select_language_menu.setFixedWidth(100)
+        self.select_language_menu.addItem("English", "eng")
+        self.select_language_menu.addItem("Farsi", "fas")
+        self.select_language_menu.setCurrentIndex(0)
+        self.language = self.select_language_menu.currentData()
+        self.select_language_menu.currentIndexChanged.connect(self.set_language)
+
+        self.save_text_button = QPushButton("Save Text")
+        self.save_text_button.clicked.connect(self.save_text_into_file)
+
+        buttons_layout.addWidget(self.select_image_to_extract_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        buttons_layout.addWidget(self.select_language_menu, alignment=Qt.AlignmentFlag.AlignLeft)
+        buttons_layout.addStretch(1)
+        buttons_layout.addWidget(self.save_text_button, alignment=Qt.AlignmentFlag.AlignRight)
+
         layout.addWidget(self.back_button)
-        layout.addWidget(self.text_scroll_area)
-        layout.addWidget(self.select_image_to_extract_button)
-        layout.addWidget(self.copy_button)
+        layout.addWidget(self.text_container)
+        layout.addWidget(self.buttons_widget)
 
         if is_dark_theme():
             self.apply_text_from_image_dark_style()
         else:
             self.apply_text_from_image_light_style()
+
+    def save_text_into_file(self):
+        text = self.textEdit.toPlainText()
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save Text", settings.location, "Text Files (*.txt);;All Files (*)")
+        if save_path:
+            with open(f"{save_path}.txt", 'w') as f:
+                f.write(text)
+
+    def set_language(self, index):
+        self.select_language_menu.setCurrentIndex(index)
+        self.language = self.select_language_menu.currentData()
 
     def show_main_page(self):
         self.stack.setCurrentWidget(self.main_page)
@@ -731,7 +781,7 @@ class MainWindow(QMainWindow):
         filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options)
         if filenames:
             if self.stack.currentWidget() == self.text_from_image_page:
-                self.extractText(filenames)
+                self.extractText(filenames[0])
             elif self.stack.currentWidget() == self.img2pdf_page:
                 self.image_files = filenames
                 self.display_selected_images(self.image_layout)
@@ -834,7 +884,8 @@ class MainWindow(QMainWindow):
 
     def extractText(self, filename):
         image = Image.open(filename)
-        text = pytesseract.image_to_string(image)
+        custom_config = r"--oem 3 --psm 6"
+        text = pytesseract.image_to_string(image, lang=self.language, config=custom_config)
         self.textEdit.setPlainText(text)
 
     def copyText(self):
@@ -849,6 +900,9 @@ class MainWindow(QMainWindow):
         toast = Toast(self)
         toast.setDuration(2000)
         toast.setText(message)
+        toast.setShowDurationBar(False)
+        toast.setShowIconSeparator(False)
+        toast.setShowCloseButton(False)
         toast.setResetDurationOnHover(False)
         if message_type == "SUCCESS":
             if is_dark_theme():
@@ -861,6 +915,12 @@ class MainWindow(QMainWindow):
             else:
                 toast.applyPreset(ToastPreset.ERROR)
         toast.show()
+
+    def back_button_style(self):
+        if is_dark_theme():
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
+        else:
+            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
