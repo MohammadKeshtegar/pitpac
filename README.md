@@ -18,13 +18,15 @@ The app also have a settings page that for now has only one option and it's ligh
 Just run
 
 ```
-pip install -r required.txt
+pip install -r requirements.txt
 ```
 
 And this should install all the nessecary packages for you.
 
 _Notes_:
-If you ran it the via terminal and faced these errors
+1 - For extracting text from image, i used pytesseract packges which is an OCR tool for recongnizing and reading text in images. Besides this package you need to install tesseract it self in your machine, so then you can use this package in your app.
+
+2 - If you ran it the via terminal and faced these errors
 
 ```
 QFont::fromString: Invalid description 'Fira Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'

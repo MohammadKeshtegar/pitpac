@@ -4,6 +4,9 @@ from PyQt5.QtCore import Qt
 from qtwidgets import Toggle
 
 from assets import save_theme_preference, settings, is_dark_theme
+from styles import button_dark_style, button_light_style
+
+# from main_page import apply_main_light_style, apply_main_dark_style
 
 class SettingsWindow(QWidget):
     def __init__(self, mainWindowObject, aboutWindowObject):
@@ -141,12 +144,12 @@ class SettingsWindow(QWidget):
         self.toggle_label.setText("Dark Mode")
         self.location_widget.setStyleSheet("background-color: #262626")
         self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_dark_style)
+        self.browse_location_button.setStyleSheet(button_dark_style)
         self.font_family_widget.setStyleSheet("background-color: #262626")
         self.font_size_widget.setStyleSheet("background-color: #262626")
         self.font_combo.setStyleSheet("background-color: #3e3e3e")
         self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_dark_style)
+        self.ok_button.setStyleSheet(button_dark_style)
 
     def settings_light_style(self):
         self.setStyleSheet("background-color: #f5f5f5")
@@ -154,12 +157,12 @@ class SettingsWindow(QWidget):
         self.toggle_label.setText("Light Mode")
         self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
         self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
-        self.browse_location_button.setStyleSheet(self.mainWindowObject.button_light_style)
+        self.browse_location_button.setStyleSheet(button_light_style)
         self.font_family_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
         self.font_size_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
         self.font_combo.setStyleSheet("background-color: #e5e5e5")
         self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
-        self.ok_button.setStyleSheet(self.mainWindowObject.button_light_style)
+        self.ok_button.setStyleSheet(button_light_style)
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"

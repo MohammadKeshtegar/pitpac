@@ -7,6 +7,9 @@ load_dotenv()
 PATH_TO_FILE = os.getenv("PATH_TO_FILE")
 START_LOCATION = os.getenv("START_LOCATION")
 
+def handle_back_button(self):
+    self.stack.setCurrentWidget(self.main_page)
+
 def is_dark_theme():
     return settings.mode == "dark"
 
