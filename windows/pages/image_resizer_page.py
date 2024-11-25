@@ -5,10 +5,11 @@ from PIL import Image
 
 from image_preview import ImageDisplayWindow
 
-from styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
-from assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
+from utils.assets import is_dark_theme, PATH_TO_FILE, settings
 
 import io
+import os
 
 class ImageResizerPage(QMainWindow):
     def __init__(self, mainWindowObject):
@@ -29,12 +30,12 @@ class ImageResizerPage(QMainWindow):
         self.back_button.setFixedSize(50, 25)
         self.back_button.clicked.connect(self.handle_back_button)
 
-        self.resized_image_scroll_area = QScrollArea(self)
-        self.resized_image_scroll_area.setWidgetResizable(True)
+        self.images_scroll_area = QScrollArea()
+        self.images_scroll_area.setWidgetResizable(True)
 
-        self.resized_images_widget = QWidget()
-        self.resized_images_layout = QVBoxLayout(self.resized_images_widget)
-        self.resized_image_scroll_area.setWidget(self.resized_images_widget)
+        self.images_widget = QWidget()
+        self.resized_images_layout = QVBoxLayout(self.images_widget)
+        self.images_scroll_area.setWidget(self.images_widget)
 
         # Select image button
         self.select_image_button = QPushButton("Open Images")
@@ -83,7 +84,7 @@ class ImageResizerPage(QMainWindow):
 
         # Add widgets to the main layout
         layout.addWidget(self.back_button)
-        layout.addWidget(self.resized_image_scroll_area)
+        layout.addWidget(self.images_scroll_area)
         layout.addLayout(width_height_buttons_layout)
         layout.addWidget(self.aspect_ratio_check)
 
@@ -130,7 +131,7 @@ class ImageResizerPage(QMainWindow):
             label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio))
             row_layout.addWidget(label)
 
-            name_label = QLabel(file)
+            name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
             name_label.setFixedWidth(380)
             if is_dark_theme():
@@ -147,15 +148,16 @@ class ImageResizerPage(QMainWindow):
         self.image_files.remove(file)
         self.display_selected_images(layout)
         if not self.image_files:
-            self.button_img_to_pdf_save.setEnabled(False)
-            self.button_img_to_pdf_remove_all.setEnabled(False)
-            self.button_img_to_pdf_add.setEnabled(False)
+            self.width_input.setText("")
+            self.height_input.setText("")
+            self.width_input.setEnabled(False)
+            self.height_input.setEnabled(False)
 
     def selectImage(self):
         options = QFileDialog.Options()
         filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options)
         if filenames:
-            self.resized_image_scroll_area.setVisible(True)
+            self.images_scroll_area.setVisible(True)
             self.image_files = filenames
             self.display_selected_images(self.resized_images_layout)
         
@@ -199,8 +201,9 @@ class ImageResizerPage(QMainWindow):
 
                 pixmap = QPixmap.fromImage(qimage)
 
-                self.image_display_window.display_image(pixmap)
-                self.image_display_window.show()
+                if settings.show_image_preview:
+                    self.image_display_window.display_image(pixmap)
+                    self.image_display_window.show()
 
     def width_input_changed(self, text):
         if text == '':
@@ -252,12 +255,12 @@ class ImageResizerPage(QMainWindow):
             self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
         else:
             self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
-    # Image resizer
+    
     def apply_image_resizer_page_dark_style(self):
         self.setStyleSheet("background-color: #262626")
         self.back_button.setStyleSheet(button_dark_style)
-        self.resized_image_scroll_area.setStyleSheet(scroll_area_dark_style)
-        self.resized_images_widget.setStyleSheet("background-color: #333333")
+        self.images_scroll_area.setStyleSheet(scroll_area_dark_style)
+        self.images_widget.setStyleSheet("background-color: #333333")
         self.width_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
         self.height_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
         self.save_resized_image_button.setStyleSheet(button_dark_style)
@@ -266,8 +269,8 @@ class ImageResizerPage(QMainWindow):
     def apply_image_resizer_page_light_style(self):
         self.setStyleSheet("background-color: #e5e5e5")
         self.back_button.setStyleSheet(button_light_style)
-        self.resized_image_scroll_area.setStyleSheet(scroll_area_light_style)
-        self.resized_images_widget.setStyleSheet("background-color: #a5a5a5")
+        self.images_scroll_area.setStyleSheet(scroll_area_light_style)
+        self.images_widget.setStyleSheet("background-color: #a5a5a5")
         self.width_input.setStyleSheet("background-color: #a5a5a5")
         self.height_input.setStyleSheet("background-color: #a5a5a5")
         self.save_resized_image_button.setStyleSheet(button_light_style)

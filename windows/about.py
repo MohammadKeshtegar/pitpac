@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt
 
-from assets import is_dark_theme
+from utils.assets import is_dark_theme
 
 class AboutWindow(QWidget):
     def __init__(self):

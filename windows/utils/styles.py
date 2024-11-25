@@ -1,15 +1,13 @@
-from assets import is_dark_theme, PATH_TO_FILE
-
-button_dark_style = f"""
-    QPushButton:disabled {{ color: #525252 }} 
-    QPushButton {{ padding: 5px 10px }} 
-    QPushButton:hover {{ background-color: #313131 }}
+button_dark_style = """
+    QPushButton:disabled { color: #525252 } 
+    QPushButton { padding: 5px 10px }
+    QPushButton:hover { background-color: #313131 }
 """
 
-button_light_style = f"""
-    QPushButton:disabled {{ color: #646464 }} 
-    QPushButton {{ padding: 5px 10px; color: #262626 }} 
-    QPushButton:hover {{ background-color: #4464e6 }}
+button_light_style = """
+    QPushButton:disabled { color: #646464 }
+    QPushButton { padding: 5px 10px; color: #262626 }
+    QPushButton:hover { background-color: #4464e6 }
 """
 
 scroll_area_dark_style = """
@@ -32,17 +30,17 @@ scroll_area_light_style = """
     QScrollArea { background-color: #646464 }
 """
 
-remove_button_dark_style = f"""
-    QPushButton {{ background-color: #1a1a1a; border: 1px solid #404040 }} 
-    QPushButton:hover {{ background-color: #313131 }}
+remove_button_dark_style = """
+    QPushButton { background-color: #1a1a1a; border: 1px solid #404040 } 
+    QPushButton:hover { background-color: #313131 }
 """
 
-remove_button_light_style = f"""
-    QPushButton {{ background-color: #fff; border: 1px solid #a3a3a3 }} 
-    QPushButton:hover {{ background-color: #4464e6 }}
+remove_button_light_style = """
+    QPushButton { background-color: #fff; border: 1px solid #a3a3a3 } 
+    QPushButton:hover { background-color: #4464e6 }
 """
 
-combobox_dark_style = """ 
+combobox_dark_style = """
     QComboBox:hover { background-color: #313131 }
     QComboBox::item:hover { background-color: #646464 }
 """ 
@@ -52,5 +50,8 @@ combobox_light_style = """
     QComboBox:hover { background-color: #4464e6 }
     QComboBox::item:hover { background-color: #646464 }
 """ 
+
+settings_option_dark_style = "background-color: #262626"
+settings_option_light_style = "background-color: #d4d4d4; color: #222222"
 
 button_size = 400

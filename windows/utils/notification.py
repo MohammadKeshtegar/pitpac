@@ -1,5 +1,5 @@
 from pyqttoast import Toast, ToastPreset, ToastPosition
-from assets import is_dark_theme
+from utils.assets import is_dark_theme
 
 def notification(self, message, message_type = "SUCCESS"):
     Toast.setPosition(ToastPosition.TOP_MIDDLE)

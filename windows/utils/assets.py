@@ -18,8 +18,9 @@ def load_theme_prefernence():
     mode = app_settings.value("mode", "dark")
     location = app_settings.value("location", START_LOCATION)
     font_family = app_settings.value("font_family", "Noto Sans")
-    font_size = app_settings.value("font_size", 12)
-    return mode, location, font_family, font_size
+    font_size = app_settings.value("font_size", 12, type=int)
+    show_image_preview = app_settings.value("show_image_preview", True, type=bool)
+    return mode, location, font_family, font_size, show_image_preview
 
 def save_theme_preference():
     app_settings = QSettings("Pitpac", "pitpac")
@@ -27,9 +28,10 @@ def save_theme_preference():
     app_settings.setValue("location", settings.location)
     app_settings.setValue("font_family", settings.font_family)
     app_settings.setValue("font_size", settings.font_size)
+    app_settings.setValue("show_image_preview", settings.show_image_preview)
 
 class Settings:
     def __init__(self):
-        self.mode, self.location, self.font_family, self.font_size = load_theme_prefernence()
+        self.mode, self.location, self.font_family, self.font_size, self.show_image_preview = load_theme_prefernence()
 
 settings = Settings()

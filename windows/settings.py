@@ -3,10 +3,8 @@ from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtCore import Qt
 from qtwidgets import Toggle
 
-from assets import save_theme_preference, settings, is_dark_theme
-from styles import button_dark_style, button_light_style
-
-# from main_page import apply_main_light_style, apply_main_dark_style
+from utils.assets import save_theme_preference, settings, is_dark_theme
+from utils.styles import button_dark_style, button_light_style, settings_option_dark_style, settings_option_light_style
 
 class SettingsWindow(QWidget):
     def __init__(self, mainWindowObject, aboutWindowObject):
@@ -28,18 +26,18 @@ class SettingsWindow(QWidget):
         self.settings_options_widget.setLayout(settings_options_layout)
 
         # Toggle
-        self.toggle_widget = QWidget()
-        toggle_layout = QHBoxLayout()
-        self.toggle_widget.setLayout(toggle_layout)
+        self.toggle_mode_widget = QWidget()
+        toggle_mode_layout = QHBoxLayout()
+        self.toggle_mode_widget.setLayout(toggle_mode_layout)
 
-        self.toggle_label = QLabel(f"{settings.mode.title()} Mode", self)
-        self.toggle = Toggle()
+        self.toggle_mode_label = QLabel(f"{settings.mode.title()} Mode", self)
+        self.toggle_mode = Toggle()
 
-        self.toggle.setChecked(True if is_dark_theme() else False)
-        self.toggle.stateChanged.connect(self.switch_mode)
+        self.toggle_mode.setChecked(True if is_dark_theme() else False)
+        self.toggle_mode.stateChanged.connect(self.switch_mode)
 
-        toggle_layout.addWidget(self.toggle_label, alignment=Qt.AlignLeft)
-        toggle_layout.addWidget(self.toggle, alignment=Qt.AlignRight)
+        toggle_mode_layout.addWidget(self.toggle_mode_label, alignment=Qt.AlignLeft)
+        toggle_mode_layout.addWidget(self.toggle_mode, alignment=Qt.AlignRight)
 
         # Location
         self.location_widget = QWidget()
@@ -56,9 +54,6 @@ class SettingsWindow(QWidget):
 
         location_layout.addWidget(self.location_field, alignment=Qt.AlignmentFlag.AlignLeft)
         location_layout.addWidget(self.browse_location_button, alignment=Qt.AlignmentFlag.AlignRight)
-
-        settings_options_layout.addWidget(self.toggle_widget)
-        settings_options_layout.addWidget(self.location_widget)
 
         # Font family
         self.font_family_widget = QWidget()
@@ -77,8 +72,6 @@ class SettingsWindow(QWidget):
         font_family_layout.addWidget(self.font_label, alignment=Qt.AlignLeft)
         font_family_layout.addWidget(self.font_combo, alignment=Qt.AlignRight)
 
-        settings_options_layout.addWidget(self.font_family_widget)
-
         # Font size
         self.font_size_widget = QWidget()
         font_size_layout = QHBoxLayout()
@@ -92,9 +85,21 @@ class SettingsWindow(QWidget):
         self.font_size_spin.valueChanged.connect(self.set_font_size)
 
         font_size_layout.addWidget(self.font_size_label, alignment=Qt.AlignLeft)
-        font_size_layout.addWidget(self.font_size_spin, alignment=Qt.AlignRight)
-        
-        settings_options_layout.addWidget(self.font_size_widget)
+        font_size_layout.addWidget(self.font_size_spin, alignment=Qt.AlignRight)        
+
+        # Show image preview
+        self.image_preview = QWidget()
+        image_preview_layout = QHBoxLayout()
+        self.image_preview.setLayout(image_preview_layout)
+
+        self.image_preview_label = QLabel("Show image preview", self)
+
+        self.image_preview_toggle = Toggle()
+        self.image_preview_toggle.setChecked(settings.show_image_preview)
+        self.image_preview_toggle.stateChanged.connect(self.toggle_show_image_preview)
+
+        image_preview_layout.addWidget(self.image_preview_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        image_preview_layout.addWidget(self.image_preview_toggle, alignment=Qt.AlignmentFlag.AlignRight)
 
         # Ok button
         self.ok_widget = QWidget()
@@ -105,6 +110,12 @@ class SettingsWindow(QWidget):
         self.ok_button.setFixedWidth(100)
         self.ok_button.clicked.connect(self.ok_click)
 
+        settings_options_layout.addWidget(self.toggle_mode_widget)
+        settings_options_layout.addWidget(self.location_widget)
+        settings_options_layout.addWidget(self.font_family_widget)
+        settings_options_layout.addWidget(self.font_size_widget)
+        settings_options_layout.addWidget(self.image_preview)
+
         ok_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout.addWidget(self.settings_options_widget, alignment=Qt.AlignmentFlag.AlignTop)
@@ -113,6 +124,10 @@ class SettingsWindow(QWidget):
         if not self.layout():
             self.setLayout(layout)
         self.update_style()
+
+    def toggle_show_image_preview(self, state):
+        settings.show_image_preview = True if state == 2 else False
+        save_theme_preference()
 
     def set_font(self, font):
         self.selected_font = font.family()
@@ -138,32 +153,6 @@ class SettingsWindow(QWidget):
         else:
             self.settings_light_style()
 
-    def settings_dark_style(self):
-        self.setStyleSheet("background-color: #1e1e1e")
-        self.toggle_widget.setStyleSheet("background-color: #262626")
-        self.toggle_label.setText("Dark Mode")
-        self.location_widget.setStyleSheet("background-color: #262626")
-        self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-        self.browse_location_button.setStyleSheet(button_dark_style)
-        self.font_family_widget.setStyleSheet("background-color: #262626")
-        self.font_size_widget.setStyleSheet("background-color: #262626")
-        self.font_combo.setStyleSheet("background-color: #3e3e3e")
-        self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
-        self.ok_button.setStyleSheet(button_dark_style)
-
-    def settings_light_style(self):
-        self.setStyleSheet("background-color: #f5f5f5")
-        self.toggle_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
-        self.toggle_label.setText("Light Mode")
-        self.location_widget.setStyleSheet("background-color: #d4d4d4; color: #222222")
-        self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
-        self.browse_location_button.setStyleSheet(button_light_style)
-        self.font_family_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
-        self.font_size_widget.setStyleSheet("background-color: #d4d4d4; color: #111111")
-        self.font_combo.setStyleSheet("background-color: #e5e5e5")
-        self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
-        self.ok_button.setStyleSheet(button_light_style)
-
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
         
@@ -182,3 +171,31 @@ class SettingsWindow(QWidget):
 
         self.update_style()
         self.mainWindowObject.initUI()
+
+    def settings_dark_style(self):
+        self.setStyleSheet("background-color: #1e1e1e")
+        self.toggle_mode_widget.setStyleSheet(settings_option_dark_style)
+        self.toggle_mode_label.setText("Dark Mode")
+        self.location_widget.setStyleSheet(settings_option_dark_style)
+        self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
+        self.browse_location_button.setStyleSheet(button_dark_style)
+        self.font_family_widget.setStyleSheet(settings_option_dark_style)
+        self.font_size_widget.setStyleSheet(settings_option_dark_style)
+        self.font_combo.setStyleSheet("background-color: #3e3e3e")
+        self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
+        self.image_preview.setStyleSheet(settings_option_dark_style)
+        self.ok_button.setStyleSheet(button_dark_style)
+
+    def settings_light_style(self):
+        self.setStyleSheet("background-color: #f5f5f5")
+        self.toggle_mode_widget.setStyleSheet(settings_option_light_style)
+        self.toggle_mode_label.setText("Light Mode")
+        self.location_widget.setStyleSheet(settings_option_light_style)
+        self.location_field.setStyleSheet("border: none; background-color: #e5e5e5; border-radius: 3px; padding: 3px 6px; color: #111111")
+        self.browse_location_button.setStyleSheet(button_light_style)
+        self.font_family_widget.setStyleSheet(settings_option_light_style)
+        self.font_size_widget.setStyleSheet(settings_option_light_style)
+        self.font_combo.setStyleSheet("background-color: #e5e5e5")
+        self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
+        self.image_preview.setStyleSheet(settings_option_light_style)
+        self.ok_button.setStyleSheet(button_light_style)

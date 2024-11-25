@@ -2,8 +2,8 @@ from PyQt5.QtWidgets import QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBo
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 
-from styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
-from assets import is_dark_theme, settings, PATH_TO_FILE
+from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
+from utils.assets import is_dark_theme, settings, PATH_TO_FILE
 
 import PyPDF4
 

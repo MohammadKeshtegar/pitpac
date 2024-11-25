@@ -3,9 +3,9 @@ from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt
 from PIL import Image
 
-from styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, combobox_dark_style ,combobox_light_style
-from assets import is_dark_theme, PATH_TO_FILE, settings
-from notification import notification
+from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, combobox_dark_style ,combobox_light_style
+from utils.assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.notification import notification
 
 import pytesseract
 
