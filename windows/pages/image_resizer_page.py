@@ -24,6 +24,7 @@ class ImageResizerPage(QMainWindow):
 
         layout = QVBoxLayout(self.central_widget)
 
+        # Back button
         self.back_button = QPushButton()
         self.back_button_style()
 
@@ -40,7 +41,26 @@ class ImageResizerPage(QMainWindow):
         # Select image button
         self.select_image_button = QPushButton("Open Images")
         self.select_image_button.clicked.connect(self.selectImage)
+        self.select_image_button.setFixedWidth(300)
 
+        # Remove all image button
+        self.remove_all_images_button = QPushButton("Remove all images")
+        self.remove_all_images_button.clicked.connect(self.remove_all_images)
+        self.remove_all_images_button.setFixedWidth(300)
+        self.remove_all_images_button.setEnabled(False)
+
+        # Add image button
+        self.add_image_button = QPushButton("Add image")
+        self.add_image_button.clicked.connect(self.add_image)
+        self.add_image_button.setFixedWidth(300)
+        self.add_image_button.setEnabled(False)
+
+        # Save button
+        self.save_resized_image_button = QPushButton("Save")
+        self.save_resized_image_button.clicked.connect(self.save_resized_image)
+        self.save_resized_image_button.setFixedWidth(300)
+        self.save_resized_image_button.setEnabled(False)
+        
         # Width input
         self.width_input = QLineEdit(self)
         self.width_input.setPlaceholderText("width")
@@ -63,19 +83,18 @@ class ImageResizerPage(QMainWindow):
         self.aspect_ratio_check = QCheckBox("Aspect ratio", self)
         self.aspect_ratio_check.setChecked(True)
 
-        # Save button
-        self.save_resized_image_button = QPushButton("Save")
-        self.save_resized_image_button.clicked.connect(self.save_resized_image)
-
         # Layout for width and height inputs
         width_height_layout = QVBoxLayout()
+        width_height_layout.addWidget(self.aspect_ratio_check)
         width_height_layout.addWidget(self.width_input)
         width_height_layout.addWidget(self.height_input)
 
         # Layout for buttons
         button_layout = QVBoxLayout()
-        button_layout.addWidget(self.select_image_button)
-        button_layout.addWidget(self.save_resized_image_button)
+        button_layout.addWidget(self.select_image_button, alignment=Qt.AlignmentFlag.AlignRight)
+        button_layout.addWidget(self.add_image_button, alignment=Qt.AlignmentFlag.AlignRight)
+        button_layout.addWidget(self.remove_all_images_button, alignment=Qt.AlignmentFlag.AlignRight)
+        button_layout.addWidget(self.save_resized_image_button, alignment=Qt.AlignmentFlag.AlignRight)
 
         # Layout for width and height inputs and buttons layout
         width_height_buttons_layout = QHBoxLayout()
@@ -86,7 +105,7 @@ class ImageResizerPage(QMainWindow):
         layout.addWidget(self.back_button)
         layout.addWidget(self.images_scroll_area)
         layout.addLayout(width_height_buttons_layout)
-        layout.addWidget(self.aspect_ratio_check)
+        # layout.addWidget(self.aspect_ratio_check)
 
         if is_dark_theme():
             self.apply_image_resizer_page_dark_style()
@@ -150,25 +169,48 @@ class ImageResizerPage(QMainWindow):
         if not self.image_files:
             self.width_input.setText("")
             self.height_input.setText("")
+            self.remove_all_images_button.setEnabled(False)
+            self.add_image_button.setEnabled(False)
+            self.save_resized_image_button.setEnabled(False)
             self.width_input.setEnabled(False)
             self.height_input.setEnabled(False)
-
-    def selectImage(self):
+    
+    def add_image(self):
         options = QFileDialog.Options()
-        filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options)
-        if filenames:
-            self.images_scroll_area.setVisible(True)
-            self.image_files = filenames
-            self.display_selected_images(self.resized_images_layout)
-        
-            self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames]
-            self.original_aspect_ratio = self.images[0].width / self.images[0].height
-            self.width_input.setText(str(self.images[0].width))
-            self.width_input.setEnabled(True)
-            self.height_input.setText(str(self.images[0].height))
-            self.height_input.setEnabled(True)
+        files, _ = QFileDialog.getOpenFileNames(self, "Add Images", settings.location, "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
+        if files:
+            self.image_files.extend(files)
+            self.display_selected_images(self.image_layout)
 
-            self.updateImage()
+    def remove_all_images(self):
+        self.image_files = []
+        self.display_selected_images(self.image_layout)
+        self.button_img_to_pdf_save.setEnabled(False)
+        self.button_img_to_pdf_remove_all.setEnabled(False)
+        self.button_img_to_pdf_add.setEnabled(False)
+
+    def selectImage(self): 
+        options = QFileDialog.Options() 
+        filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options) 
+        if filenames: 
+            self.images_scroll_area.setVisible(True) 
+            self.image_files = filenames 
+            self.display_selected_images(self.resized_images_layout) 
+            
+            self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames] 
+            self.original_aspect_ratio = self.images[0].width / self.images[0].height 
+            self.width_input.setText(str(self.images[0].width)) 
+            self.height_input.setText(str(self.images[0].height)) 
+            
+            self.width_input.setEnabled(True) 
+            self.height_input.setEnabled(True) 
+            self.remove_all_images_button.setEnabled(True) 
+            self.add_image_button.setEnabled(True) 
+            self.save_resized_image_button.setEnabled(True)  
+            
+            pixmap = QPixmap(filenames[0]) 
+            
+            self.image_display_window.display_image(pixmap)
 
     def updateImage(self, width=None, height=None):
         if self.images:
@@ -265,6 +307,8 @@ class ImageResizerPage(QMainWindow):
         self.height_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
         self.save_resized_image_button.setStyleSheet(button_dark_style)
         self.select_image_button.setStyleSheet(button_dark_style)
+        self.remove_all_images_button.setStyleSheet(button_dark_style)
+        self.add_image_button.setStyleSheet(button_dark_style)
 
     def apply_image_resizer_page_light_style(self):
         self.setStyleSheet("background-color: #e5e5e5")
@@ -275,3 +319,5 @@ class ImageResizerPage(QMainWindow):
         self.height_input.setStyleSheet("background-color: #a5a5a5")
         self.save_resized_image_button.setStyleSheet(button_light_style)
         self.select_image_button.setStyleSheet(button_light_style)
+        self.remove_all_images_button.setStyleSheet(button_light_style)
+        self.add_image_button.setStyleSheet(button_light_style)
