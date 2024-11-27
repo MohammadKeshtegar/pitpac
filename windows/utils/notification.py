@@ -1,11 +1,11 @@
 from pyqttoast import Toast, ToastPreset, ToastPosition
 from utils.assets import is_dark_theme
 
-def notification(self, message, message_type = "SUCCESS"):
+def notification(parent, message, message_type = "SUCCESS"):
     Toast.setPosition(ToastPosition.TOP_MIDDLE)
-    Toast.setPositionRelativeToWidget(self)
+    Toast.setPositionRelativeToWidget(parent)
     Toast.setOffset(30, 10)
-    toast = Toast(self)
+    toast = Toast(parent)
     toast.setDuration(2000)
     toast.setText(message)
     toast.setShowDurationBar(False)

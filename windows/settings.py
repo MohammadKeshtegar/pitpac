@@ -3,7 +3,7 @@ from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtCore import Qt
 from qtwidgets import Toggle
 
-from utils.assets import save_theme_preference, settings, is_dark_theme
+from utils.assets import save_theme_preference, settings, is_dark_theme, START_LOCATION
 from utils.styles import button_dark_style, button_light_style, settings_option_dark_style, settings_option_light_style
 
 class SettingsWindow(QWidget):
@@ -14,6 +14,8 @@ class SettingsWindow(QWidget):
         self.setGeometry(300, 300, 400, 400)
         self.mainWindowObject = mainWindowObject
         self.aboutWindowObject = aboutWindowObject
+        self.new_font_family = None
+        self.new_font_size = None
         
         self.initUI()
 
@@ -62,12 +64,15 @@ class SettingsWindow(QWidget):
 
         self.font_label = QLabel("Select Font", self)
         self.font_combo = QFontComboBox(self)
+        self.font_combo.setCurrentText(settings.font_family)
 
+        self.current_font_family = self.font_combo.currentText()
+        
         font_db = QFontDatabase()
         for family in font_db.families():
             self.font_combo.addItem(family)
  
-        self.font_combo.currentFontChanged.connect(self.set_font)
+        self.font_combo.currentFontChanged.connect(self.set_font_family)
         
         font_family_layout.addWidget(self.font_label, alignment=Qt.AlignLeft)
         font_family_layout.addWidget(self.font_combo, alignment=Qt.AlignRight)
@@ -79,10 +84,12 @@ class SettingsWindow(QWidget):
 
         self.font_size_label = QLabel("Font Size", self)
         self.font_size_spin = QSpinBox(self)
-        self.font_size_spin.setRange(6, 72) # Example range 
-        self.font_size_spin.setValue(12) # Default value 
+        self.font_size_spin.setRange(6, 72)
+        self.font_size_spin.setValue(settings.font_size) 
         self.font_size_spin.setFixedWidth(60)
         self.font_size_spin.valueChanged.connect(self.set_font_size)
+
+        self.current_font_size = self.font_size_spin.value()
 
         font_size_layout.addWidget(self.font_size_label, alignment=Qt.AlignLeft)
         font_size_layout.addWidget(self.font_size_spin, alignment=Qt.AlignRight)        
@@ -101,14 +108,18 @@ class SettingsWindow(QWidget):
         image_preview_layout.addWidget(self.image_preview_label, alignment=Qt.AlignmentFlag.AlignLeft)
         image_preview_layout.addWidget(self.image_preview_toggle, alignment=Qt.AlignmentFlag.AlignRight)
 
-        # Ok button
-        self.ok_widget = QWidget()
-        ok_layout = QHBoxLayout()
-        self.ok_widget.setLayout(ok_layout)
+        # Ok and Reset button
+        self.ok_reset_widget = QWidget()
+        ok_reset_layout = QHBoxLayout()
+        self.ok_reset_widget.setLayout(ok_reset_layout)
 
         self.ok_button = QPushButton("Ok")
         self.ok_button.setFixedWidth(100)
         self.ok_button.clicked.connect(self.ok_click)
+
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.setFixedWidth(100)
+        self.reset_button.clicked.connect(self.reset_click)
 
         settings_options_layout.addWidget(self.toggle_mode_widget)
         settings_options_layout.addWidget(self.location_widget)
@@ -116,10 +127,11 @@ class SettingsWindow(QWidget):
         settings_options_layout.addWidget(self.font_size_widget)
         settings_options_layout.addWidget(self.image_preview)
 
-        ok_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
+        ok_reset_layout.addWidget(self.reset_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        ok_reset_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout.addWidget(self.settings_options_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(self.ok_widget, alignment=Qt.AlignmentFlag.AlignBottom)
+        layout.addWidget(self.ok_reset_widget, alignment=Qt.AlignmentFlag.AlignBottom)
 
         if not self.layout():
             self.setLayout(layout)
@@ -129,14 +141,30 @@ class SettingsWindow(QWidget):
         settings.show_image_preview = True if state == 2 else False
         save_theme_preference()
 
-    def set_font(self, font):
-        self.selected_font = font.family()
+    def set_font_family(self, font):
+        settings.font_family = font.family()
+        save_theme_preference()
+        self.new_font_family = font.family()
 
     def set_font_size(self, size):
-        self.selected_font_size = size
+        settings.font_size = size
+        save_theme_preference()
+        self.new_font_size = size
 
     def ok_click(self):
+        condition_1 = self.new_font_family is not None and self.current_font_family != self.new_font_size
+        condition_2 = self.new_font_size is not None and self.current_font_size != self.new_font_size
+
+        if condition_1 or condition_2:
+            self.reload_main_window()
         self.close()
+
+    def reset_click(self):
+        settings.mode = "dark"
+        settings.location = START_LOCATION
+        settings.font_family = "Noto Sans"
+        settings.font_size = 10
+        settings.show_image_preview = True
 
     def browse_location(self):
         options = QFileDialog.Options()
@@ -172,6 +200,11 @@ class SettingsWindow(QWidget):
         self.update_style()
         self.mainWindowObject.initUI()
 
+    def reload_main_window(self):
+        self.mainWindowObject.close()
+        self.mainWindowObject.__init__()
+        self.mainWindowObject.show()
+
     def settings_dark_style(self):
         self.setStyleSheet("background-color: #1e1e1e")
         self.toggle_mode_widget.setStyleSheet(settings_option_dark_style)
@@ -184,6 +217,7 @@ class SettingsWindow(QWidget):
         self.font_combo.setStyleSheet("background-color: #3e3e3e")
         self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
         self.image_preview.setStyleSheet(settings_option_dark_style)
+        self.reset_button.setStyleSheet(button_dark_style)
         self.ok_button.setStyleSheet(button_dark_style)
 
     def settings_light_style(self):
@@ -198,4 +232,5 @@ class SettingsWindow(QWidget):
         self.font_combo.setStyleSheet("background-color: #e5e5e5")
         self.font_size_spin.setStyleSheet("background-color: #e5e5e5")
         self.image_preview.setStyleSheet(settings_option_light_style)
+        self.reset_button.setStyleSheet(button_light_style)
         self.ok_button.setStyleSheet(button_light_style)

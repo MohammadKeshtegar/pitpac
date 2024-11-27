@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QFileDialog, QLabel
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import Qt
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
+from utils.notification import notification
 
 import img2pdf
 
@@ -158,6 +159,7 @@ class Image2PDFPage(QMainWindow):
         if save_path:
             with open(f"{save_path}.pdf", 'wb') as f:
                 f.write(img2pdf.convert(self.image_files))
+                notification(self, message="PDF saved Successfully!")
                 print(f"PDF saved to {save_path}")
 
     def selectImage(self):

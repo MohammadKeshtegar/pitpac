@@ -7,6 +7,7 @@ from image_preview import ImageDisplayWindow
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.notification import notification
 
 import io
 import os
@@ -288,6 +289,7 @@ class ImageResizerPage(QMainWindow):
             save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif);;All Files (*)")
             if save_path:
                 resized_image.save(save_path)
+                notification(self, "Resized images saved!")
 
     def handle_back_button(self):
         self.mainWindowObject.show_main_page()

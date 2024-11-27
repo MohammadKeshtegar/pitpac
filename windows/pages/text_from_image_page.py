@@ -20,6 +20,7 @@ class TextFromImagePage(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         layout = QVBoxLayout(self.central_widget)
+        # self.central_widget.setLayout(layout)
 
         self.back_button = QPushButton()
         self.back_button_style()
@@ -49,6 +50,7 @@ class TextFromImagePage(QMainWindow):
         self.copy_button_layout.addStretch()
         self.copy_button_widget.setLayout(self.copy_button_layout)
         self.copy_button = QPushButton("Copy", self.textEdit)
+        self.copy_button.setEnabled(False)
         self.copy_button.clicked.connect(self.copyText)
         self.copy_button_layout.addWidget(self.copy_button)
         
@@ -74,6 +76,7 @@ class TextFromImagePage(QMainWindow):
         self.select_language_menu.currentIndexChanged.connect(self.set_language)
 
         self.save_text_button = QPushButton("Save Text")
+        self.save_text_button.setEnabled(False)
         self.save_text_button.clicked.connect(self.save_text_into_file)
 
         buttons_layout.addWidget(self.select_image_to_extract_button, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -85,6 +88,7 @@ class TextFromImagePage(QMainWindow):
         layout.addWidget(self.text_container)
         layout.addWidget(self.buttons_widget)
 
+
         if is_dark_theme():
             self.apply_text_from_image_dark_style()
         else:
@@ -95,6 +99,8 @@ class TextFromImagePage(QMainWindow):
         filenames, _ = QFileDialog.getOpenFileNames(self, "Open Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.jfif)", options=options)
         if filenames:
             self.extractText(filenames[0])
+            self.copy_button.setEnabled(True)
+            self.save_text_button.setEnabled(True)
 
     def extractText(self, filename):
         image = Image.open(filename)
@@ -105,7 +111,7 @@ class TextFromImagePage(QMainWindow):
     def copyText(self):
         self.textEdit.selectAll()
         self.textEdit.copy()
-        notification(self, "Copied")
+        notification(self.text_container, "Copied")
 
     def set_language(self, index):
         self.select_language_menu.setCurrentIndex(index)

@@ -18,7 +18,7 @@ def load_theme_prefernence():
     mode = app_settings.value("mode", "dark")
     location = app_settings.value("location", START_LOCATION)
     font_family = app_settings.value("font_family", "Noto Sans")
-    font_size = app_settings.value("font_size", 12, type=int)
+    font_size = app_settings.value("font_size", 10, type=int)
     show_image_preview = app_settings.value("show_image_preview", True, type=bool)
     return mode, location, font_family, font_size, show_image_preview
 

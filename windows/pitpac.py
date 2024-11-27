@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QStackedWidget, QVBoxLayout
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt
 
 from utils.styles import button_size, button_dark_style, button_light_style
@@ -9,6 +9,8 @@ from pages.text_from_image_page import TextFromImagePage
 from pages.image_resizer_page import ImageResizerPage
 from pages.pdf_combiner_page import PDFCombinerPage
 from pages.image_to_pdf_page import Image2PDFPage
+
+from utils.assets import settings
 
 from settings import SettingsWindow
 from about import AboutWindow
@@ -80,6 +82,15 @@ class MainWindow(QMainWindow):
         self.settings_button.setFixedWidth(button_size)
         self.about_button.setFixedWidth(button_size)
         self.close_app_button.setFixedWidth(button_size)
+
+        # buttons font family and size
+        self.image2pdf_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.pdf_combiner_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.image_resizer_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.text_from_image_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.settings_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.about_button.setFont(QFont(settings.font_family, settings.font_size))
+        self.close_app_button.setFont(QFont(settings.font_family, settings.font_size))
 
         # Setting buttons function
         self.pdf_combiner_button.clicked.connect(self.show_pdf_combiner_page)
