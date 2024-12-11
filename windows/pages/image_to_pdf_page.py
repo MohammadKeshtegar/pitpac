@@ -1,16 +1,19 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QFileDialog, QLabel
+from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QFileDialog, QLabel
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
+
+from pages.page import Page
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
 from utils.notification import notification
 
 import img2pdf
+import os
 
-class Image2PDFPage(QMainWindow):
+class Image2PDFPage(Page):
     def __init__(self, mainWindowObject):
-        super().__init__()
+        super().__init__(mainWindowObject)
         self.mainWindowObject = mainWindowObject
         self.setup_img2pdf_page()
 
@@ -20,10 +23,8 @@ class Image2PDFPage(QMainWindow):
 
         layout = QVBoxLayout(self.central_widget)
 
-        self.back_button = QPushButton()
-        self.back_button_style()
-        self.back_button.setFixedSize(50, 25)
-        self.back_button.clicked.connect(self.handle_back_button)
+        # Redirect button
+        self.redirect_button()
 
         # Creating scroll area
         self.scroll_area = QScrollArea()
@@ -36,13 +37,13 @@ class Image2PDFPage(QMainWindow):
         self.scroll_area.setWidget(self.image_container)
 
         # Creating buttons container
-        buttons_container = QWidget()
-        buttons_layout = QHBoxLayout(buttons_container)
+        self.buttons_container = QWidget()
+        buttons_layout = QHBoxLayout(self.buttons_container)
 
         # Select, Remove, Add button container
-        three_buttons_container = QWidget()
-        three_buttons_layout = QHBoxLayout(three_buttons_container)
-        buttons_layout.addWidget(three_buttons_container)
+        self.three_buttons_container = QWidget()
+        three_buttons_layout = QHBoxLayout(self.three_buttons_container)
+        buttons_layout.addWidget(self.three_buttons_container)
 
         # Select button
         self.button_img_to_pdf_select = QPushButton("Select Images")
@@ -59,11 +60,6 @@ class Image2PDFPage(QMainWindow):
         self.button_img_to_pdf_save = QPushButton("Convert to PDF")
         self.button_img_to_pdf_save.setEnabled(False)
 
-        if is_dark_theme():
-            self.apply_img_to_pdf_dark_style()
-        else:
-            self.apply_img_to_pdf_light_style()
-
         self.button_img_to_pdf_select.clicked.connect(self.selectImage)
         self.button_img_to_pdf_add.clicked.connect(self.add_images)
         self.button_img_to_pdf_remove_all.clicked.connect(self.remove_all_images)
@@ -74,10 +70,15 @@ class Image2PDFPage(QMainWindow):
         three_buttons_layout.addWidget(self.button_img_to_pdf_remove_all, alignment=Qt.AlignmentFlag.AlignCenter)
 
         buttons_layout.addWidget(self.button_img_to_pdf_save, alignment=Qt.AlignmentFlag.AlignRight)
-        
-        layout.addWidget(self.back_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout.addWidget(self.redirect_button, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.scroll_area)
-        layout.addWidget(buttons_container)
+        layout.addWidget(self.buttons_container)
+
+        if is_dark_theme():
+            self.apply_img_to_pdf_dark_style()
+        else:
+            self.apply_img_to_pdf_light_style()
 
         self.image_files = []
 
@@ -133,7 +134,7 @@ class Image2PDFPage(QMainWindow):
             label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio))
             row_layout.addWidget(label)
 
-            name_label = QLabel(file)
+            name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
             name_label.setFixedWidth(380)
             if is_dark_theme():
@@ -172,19 +173,8 @@ class Image2PDFPage(QMainWindow):
             self.button_img_to_pdf_remove_all.setEnabled(True)
             self.button_img_to_pdf_add.setEnabled(True)
 
-    def handle_back_button(self):
-        self.mainWindowObject.show_main_page()
-
-    def back_button_style(self):
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
-
     # Img to pdf styles
     def apply_img_to_pdf_dark_style(self):
-        self.setStyleSheet("background-color: #262626; color: #e5e5e5")
-        self.back_button.setStyleSheet(button_dark_style)
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
         self.image_container.setStyleSheet("background-color: #333333")
         self.button_img_to_pdf_select.setStyleSheet(button_dark_style)
@@ -193,8 +183,6 @@ class Image2PDFPage(QMainWindow):
         self.button_img_to_pdf_save.setStyleSheet(button_dark_style)
 
     def apply_img_to_pdf_light_style(self):
-        self.setStyleSheet("background-color: #e5e5e5")
-        self.back_button.setStyleSheet(button_light_style)
         self.scroll_area.setStyleSheet(scroll_area_light_style)
         self.image_container.setStyleSheet("background-color: #a5a5a5")
         self.button_img_to_pdf_select.setStyleSheet(button_light_style)

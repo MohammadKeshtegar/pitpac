@@ -50,7 +50,6 @@ class ImageDisplayWindow(QMainWindow):
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.graphics_view)
-        # self.scroll_area.setStyleSheet(scroll_area_dark_style)
 
         layout = QVBoxLayout()
         layout.addWidget(self.zoom_widget)

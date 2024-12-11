@@ -122,10 +122,10 @@ class SettingsWindow(QWidget):
         self.reset_button.clicked.connect(self.reset_click)
 
         settings_options_layout.addWidget(self.toggle_mode_widget)
+        settings_options_layout.addWidget(self.image_preview)
         settings_options_layout.addWidget(self.location_widget)
         settings_options_layout.addWidget(self.font_family_widget)
         settings_options_layout.addWidget(self.font_size_widget)
-        settings_options_layout.addWidget(self.image_preview)
 
         ok_reset_layout.addWidget(self.reset_button, alignment=Qt.AlignmentFlag.AlignLeft)
         ok_reset_layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignRight)
@@ -165,6 +165,8 @@ class SettingsWindow(QWidget):
         settings.font_family = "Noto Sans"
         settings.font_size = 10
         settings.show_image_preview = True
+        save_theme_preference()
+        self.reload_main_window()
 
     def browse_location(self):
         options = QFileDialog.Options()

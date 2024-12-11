@@ -1,18 +1,19 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QFileDialog
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QFileDialog
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PIL import Image
 
+from pages.page import Page
+
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, combobox_dark_style ,combobox_light_style
-from utils.assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.assets import is_dark_theme, settings
 from utils.notification import notification
 
 import pytesseract
 
-class TextFromImagePage(QMainWindow):
+class TextFromImagePage(Page):
     def __init__(self, mainWindowObject):
-        super().__init__()
-        self.mainWindowObject = mainWindowObject
+        super().__init__(mainWindowObject)
         self.setup_text_from_image_page()
 
     def setup_text_from_image_page(self):
@@ -20,12 +21,8 @@ class TextFromImagePage(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         layout = QVBoxLayout(self.central_widget)
-        # self.central_widget.setLayout(layout)
 
-        self.back_button = QPushButton()
-        self.back_button_style()
-        self.back_button.setFixedSize(50, 25)
-        self.back_button.clicked.connect(self.handle_back_button)
+        self.redirect_button()
 
         self.text_container = QWidget()
         self.text_container_layout = QVBoxLayout()
@@ -84,10 +81,9 @@ class TextFromImagePage(QMainWindow):
         buttons_layout.addStretch(1)
         buttons_layout.addWidget(self.save_text_button, alignment=Qt.AlignmentFlag.AlignRight)
 
-        layout.addWidget(self.back_button)
+        layout.addWidget(self.redirect_button)
         layout.addWidget(self.text_container)
         layout.addWidget(self.buttons_widget)
-
 
         if is_dark_theme():
             self.apply_text_from_image_dark_style()
@@ -117,9 +113,6 @@ class TextFromImagePage(QMainWindow):
         self.select_language_menu.setCurrentIndex(index)
         self.language = self.select_language_menu.currentData()
 
-    def handle_back_button(self):
-        self.mainWindowObject.show_main_page()
-
     def save_text_into_file(self):
         text = self.textEdit.toPlainText()
         save_path, _ = QFileDialog.getSaveFileName(self, "Save Text", settings.location, "Text Files (*.txt);;All Files (*)")
@@ -127,16 +120,9 @@ class TextFromImagePage(QMainWindow):
             with open(f"{save_path}.txt", 'w') as f:
                 f.write(text)
 
-    def back_button_style(self):
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
-
     # Text from image
     def apply_text_from_image_dark_style(self):
         self.setStyleSheet("background-color: #262626")
-        self.back_button.setStyleSheet(button_dark_style)
         self.text_scroll_area.setStyleSheet(scroll_area_dark_style)
         self.textEdit.setStyleSheet("background-color: #333333")
         self.select_image_to_extract_button.setStyleSheet(button_dark_style)
@@ -146,7 +132,6 @@ class TextFromImagePage(QMainWindow):
 
     def apply_text_from_image_light_style(self):
         self.setStyleSheet("background-color: #e5e5e5")
-        self.back_button.setStyleSheet(button_light_style)
         self.text_scroll_area.setStyleSheet(scroll_area_light_style)
         self.textEdit.setStyleSheet("background-color: #a5a5a5")
         self.select_image_to_extract_button.setStyleSheet(button_light_style)

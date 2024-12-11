@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel, QMainWindow
+from PyQt5.QtWidgets import QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
+
+from pages.page import Page
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
@@ -8,10 +10,9 @@ from utils.notification import notification
 
 import PyPDF4
 
-class PDFCombinerPage(QMainWindow):
+class PDFCombinerPage(Page):
     def __init__(self, mainWindowObject):
-        super().__init__()
-        self.mainWindowObject = mainWindowObject
+        super().__init__(mainWindowObject)
         self.setup_pdf_combiner_page()
         
     def setup_pdf_combiner_page(self):
@@ -20,15 +21,12 @@ class PDFCombinerPage(QMainWindow):
 
         layout = QVBoxLayout(self.central_widget)
         
-        self.back_button = QPushButton()
-        self.back_button_style()
-        
-        self.back_button.setFixedSize(50, 25)
-        self.back_button.clicked.connect(self.handle_back_button)
-
-        layout.setAlignment(self.back_button, Qt.AlignLeft)
-        layout.addWidget(self.back_button)
-        
+        # Redirect button
+        self.redirect_button()
+    
+        layout.setAlignment(self.redirect_button, Qt.AlignLeft)
+        layout.addWidget(self.redirect_button)
+    
         # Creating scroll area
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
@@ -154,7 +152,6 @@ class PDFCombinerPage(QMainWindow):
             self.pdf_files.extend(files)
             self.display_selected_pdfs()
 
-
     def remove_all_pdfs(self):
         self.pdf_files = []
         self.display_selected_pdfs()
@@ -180,19 +177,9 @@ class PDFCombinerPage(QMainWindow):
             self.button_pdf_combiner_remove_all.setEnabled(False)
             self.button_pdf_combiner_save.setEnabled(False)
 
-    def handle_back_button(self):
-        self.mainWindowObject.show_main_page()
-
-    def back_button_style(self):
-        if is_dark_theme():
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-        else:
-            self.back_button.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))
-
     # PDF combiner
     def apply_pdf_combiner_dark_style(self):
         self.setStyleSheet("background-color: #262626")
-        self.back_button.setStyleSheet(button_dark_style)
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
         self.pdf_container.setStyleSheet("background-color: #333333")
         self.button_pdf_combiner_select.setStyleSheet(button_dark_style)
@@ -202,7 +189,6 @@ class PDFCombinerPage(QMainWindow):
 
     def apply_pdf_combiner_light_style(self):
         self.setStyleSheet("background-color: #e5e5e5")
-        self.back_button.setStyleSheet(button_light_style)
         self.scroll_area.setStyleSheet(scroll_area_light_style)
         self.pdf_container.setStyleSheet("background-color: #a5a5a5")
         self.button_pdf_combiner_select.setStyleSheet(button_light_style)
