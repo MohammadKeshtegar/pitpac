@@ -123,8 +123,8 @@ class TextFromImagePage(QMainWindow):
 
     # Text from image
     def apply_text_from_image_dark_style(self):
-        self.central_widget.setStyleSheet("background-color: #262626")
         self.text_scroll_area.setStyleSheet(scroll_area_dark_style)
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.textEdit.setStyleSheet("background-color: #333333")
         self.select_image_to_extract_button.setStyleSheet(button_dark_style)
         self.copy_button.setStyleSheet(button_dark_style)
@@ -132,8 +132,8 @@ class TextFromImagePage(QMainWindow):
         self.select_language_menu.setStyleSheet(combobox_dark_style)
 
     def apply_text_from_image_light_style(self):
-        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.text_scroll_area.setStyleSheet(scroll_area_light_style)
+        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.textEdit.setStyleSheet("background-color: #a5a5a5")
         self.select_image_to_extract_button.setStyleSheet(button_light_style)
         self.copy_button.setStyleSheet(button_light_style)

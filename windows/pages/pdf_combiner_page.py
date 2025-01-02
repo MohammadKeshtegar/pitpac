@@ -180,8 +180,8 @@ class PDFCombinerPage(QMainWindow):
 
     # PDF combiner
     def apply_pdf_combiner_dark_style(self):
-        self.central_widget.setStyleSheet("background-color: #262626")
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.pdf_container.setStyleSheet("background-color: #333333")
         self.button_pdf_combiner_select.setStyleSheet(button_dark_style)
         self.button_pdf_combiner_add.setStyleSheet(button_dark_style)

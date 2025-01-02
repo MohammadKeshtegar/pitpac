@@ -175,8 +175,8 @@ class Image2PDFPage(QMainWindow):
 
     # Img to pdf styles
     def apply_img_to_pdf_dark_style(self):
-        self.central_widget.setStyleSheet("background-color: #262626")
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.image_container.setStyleSheet("background-color: #333333")
         self.button_img_to_pdf_select.setStyleSheet(button_dark_style)
         self.button_img_to_pdf_add.setStyleSheet(button_dark_style)
@@ -184,8 +184,8 @@ class Image2PDFPage(QMainWindow):
         self.button_img_to_pdf_save.setStyleSheet(button_dark_style)
 
     def apply_img_to_pdf_light_style(self):
-        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.scroll_area.setStyleSheet(scroll_area_light_style)
+        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.image_container.setStyleSheet("background-color: #a5a5a5")
         self.button_img_to_pdf_select.setStyleSheet(button_light_style)
         self.button_img_to_pdf_add.setStyleSheet(button_light_style)
