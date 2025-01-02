@@ -180,7 +180,7 @@ class PDFCombinerPage(QMainWindow):
 
     # PDF combiner
     def apply_pdf_combiner_dark_style(self):
-        self.setStyleSheet("background-color: #262626")
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
         self.pdf_container.setStyleSheet("background-color: #333333")
         self.button_pdf_combiner_select.setStyleSheet(button_dark_style)
@@ -189,8 +189,8 @@ class PDFCombinerPage(QMainWindow):
         self.button_pdf_combiner_save.setStyleSheet(button_dark_style)
 
     def apply_pdf_combiner_light_style(self):
-        self.setStyleSheet("background-color: #e5e5e5")
         self.scroll_area.setStyleSheet(scroll_area_light_style)
+        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.pdf_container.setStyleSheet("background-color: #a5a5a5")
         self.button_pdf_combiner_select.setStyleSheet(button_light_style)
         self.button_pdf_combiner_add.setStyleSheet(button_light_style)

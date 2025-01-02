@@ -290,7 +290,7 @@ class ImageResizerPage(QMainWindow):
                 notification(self, "Resized images saved!")
 
     def apply_image_resizer_page_dark_style(self):
-        self.setStyleSheet("background-color: #262626")
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.images_scroll_area.setStyleSheet(scroll_area_dark_style)
         self.images_widget.setStyleSheet("background-color: #333333")
         self.width_input.setStyleSheet("background-color: #333333; padding: 3px 6px; border-radius: 3px")
@@ -301,7 +301,7 @@ class ImageResizerPage(QMainWindow):
         self.add_image_button.setStyleSheet(button_dark_style)
 
     def apply_image_resizer_page_light_style(self):
-        self.setStyleSheet("background-color: #e5e5e5")
+        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.images_scroll_area.setStyleSheet(scroll_area_light_style)
         self.images_widget.setStyleSheet("background-color: #a5a5a5")
         self.width_input.setStyleSheet("background-color: #a5a5a5")
