@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QFileDialog
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PIL import Image
 
-from pages.page import Page
+from utils.backButton import BackButton
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, combobox_dark_style ,combobox_light_style
 from utils.assets import is_dark_theme, settings
@@ -11,9 +11,10 @@ from utils.notification import notification
 
 import pytesseract
 
-class TextFromImagePage(Page):
+class TextFromImagePage(QMainWindow):
     def __init__(self, mainWindowObject):
-        super().__init__(mainWindowObject)
+        super().__init__()
+        self.mainWindowObject = mainWindowObject
         self.setup_text_from_image_page()
 
     def setup_text_from_image_page(self):
@@ -22,7 +23,7 @@ class TextFromImagePage(Page):
 
         layout = QVBoxLayout(self.central_widget)
 
-        self.redirect_button()
+        self.back_button = BackButton(mainWindowObject=self.mainWindowObject)
 
         self.text_container = QWidget()
         self.text_container_layout = QVBoxLayout()
@@ -81,7 +82,7 @@ class TextFromImagePage(Page):
         buttons_layout.addStretch(1)
         buttons_layout.addWidget(self.save_text_button, alignment=Qt.AlignmentFlag.AlignRight)
 
-        layout.addWidget(self.redirect_button)
+        layout.addWidget(self.back_button)
         layout.addWidget(self.text_container)
         layout.addWidget(self.buttons_widget)
 

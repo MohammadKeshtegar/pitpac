@@ -1,10 +1,11 @@
-from PyQt5.QtWidgets import QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QCheckBox, QFileDialog, QLabel
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QCheckBox, QFileDialog, QLabel
 from PyQt5.QtGui import QFont, QIntValidator, QIcon, QImage, QPixmap
 from PyQt5.QtCore import Qt
 from PIL import Image
 
 from image_preview import ImageDisplayWindow
-from pages.page import Page
+from utils.backButton import BackButton
+
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, PATH_TO_FILE, settings
@@ -13,9 +14,10 @@ from utils.notification import notification
 import io
 import os
 
-class ImageResizerPage(Page):
+class ImageResizerPage(QMainWindow):
     def __init__(self, mainWindowObject):
-        super().__init__(mainWindowObject)
+        super().__init__()
+        self.mainWindowObject = mainWindowObject
         self.image_display_window = ImageDisplayWindow()
         self.setup_image_resizer_page()
 
@@ -26,7 +28,7 @@ class ImageResizerPage(Page):
         layout = QVBoxLayout(self.central_widget)
 
         # Back button
-        self.redirect_button()
+        self.back_button = BackButton(mainWindowObject=self.mainWindowObject)
 
         self.images_scroll_area = QScrollArea()
         self.images_scroll_area.setWidgetResizable(True)
@@ -99,7 +101,7 @@ class ImageResizerPage(Page):
         width_height_buttons_layout.addLayout(button_layout)
 
         # Add widgets to the main layout
-        layout.addWidget(self.redirect_button)
+        layout.addWidget(self.back_button)
         layout.addWidget(self.images_scroll_area)
         layout.addLayout(width_height_buttons_layout)
         # layout.addWidget(self.aspect_ratio_check)
@@ -177,11 +179,11 @@ class ImageResizerPage(Page):
         files, _ = QFileDialog.getOpenFileNames(self, "Add Images", settings.location, "Images (*.png *.jpg *.jpeg *.jfif);;All Files (*)", options=options)
         if files:
             self.image_files.extend(files)
-            self.display_selected_images(self.image_layout)
+            self.display_selected_images(self.resized_images_layout)
 
     def remove_all_images(self):
         self.image_files = []
-        self.display_selected_images(self.image_layout)
+        self.display_selected_images(self.resized_images_layout)
         self.button_img_to_pdf_save.setEnabled(False)
         self.button_img_to_pdf_remove_all.setEnabled(False)
         self.button_img_to_pdf_add.setEnabled(False)

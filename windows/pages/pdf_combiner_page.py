@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 
-from pages.page import Page
+from utils.backButton import BackButton
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
@@ -10,9 +10,10 @@ from utils.notification import notification
 
 import PyPDF4
 
-class PDFCombinerPage(Page):
+class PDFCombinerPage(QMainWindow):
     def __init__(self, mainWindowObject):
-        super().__init__(mainWindowObject)
+        super().__init__()
+        self.mainWindowObject = mainWindowObject
         self.setup_pdf_combiner_page()
         
     def setup_pdf_combiner_page(self):
@@ -22,10 +23,10 @@ class PDFCombinerPage(Page):
         layout = QVBoxLayout(self.central_widget)
         
         # Redirect button
-        self.redirect_button()
+        self.back_button = BackButton(mainWindowObject=self.mainWindowObject)
     
-        layout.setAlignment(self.redirect_button, Qt.AlignLeft)
-        layout.addWidget(self.redirect_button)
+        layout.setAlignment(self.back_button, Qt.AlignLeft)
+        layout.addWidget(self.back_button)
     
         # Creating scroll area
         self.scroll_area = QScrollArea()

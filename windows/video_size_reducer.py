@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import  QWidget, QPushButton, QLabel, QVBoxLayout, QFileDialog, QComboBox, QHBoxLayout, QCheckBox, QScrollArea
+from PyQt5.QtWidgets import QMainWindow, QWidget, QPushButton, QLabel, QVBoxLayout, QFileDialog, QComboBox, QHBoxLayout, QScrollArea, QSplitter
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
 from PIL import Image
@@ -14,7 +14,7 @@ import sys
 import io
 import os
 
-class VideoSizeReducer(QWidget):
+class VideoSizeReducer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Decrease video size")
@@ -24,8 +24,8 @@ class VideoSizeReducer(QWidget):
         self.set_styles()
 
     def setup_video_decrease_size_page(self):
-        self.main_layout = QHBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout = QSplitter(Qt.Orientation.Horizontal, self)
+        self.main_layout.setHandleWidth(10)
 
         # Left layout for options
         self.left_widget = QWidget()
@@ -62,7 +62,7 @@ class VideoSizeReducer(QWidget):
         # Video bitrate
         self.video_bitrate = QWidget()
         self.video_bitrate_layout = QHBoxLayout(self.video_bitrate)
-        self.video_bitrate_label = QLabel("Video codec")
+        self.video_bitrate_label = QLabel("Video Bitrate")
         self.video_bitrate_combo = QComboBox(self)
         self.video_bitrate_combo.addItem("500k", "500k")
         self.video_bitrate_combo.addItem("1M", "1M")
@@ -76,7 +76,7 @@ class VideoSizeReducer(QWidget):
         # Audio codec
         self.audio_codec = QWidget()
         self.audio_codec_layout = QHBoxLayout(self.audio_codec)
-        self.audio_codec_label = QLabel("Video codec")
+        self.audio_codec_label = QLabel("Audio Codec")
         self.audio_codec_combo = QComboBox(self)
         self.audio_codec_combo.addItem("acc", "acc")
         self.audio_codec_combo.addItem("mp3", "mp3")
@@ -89,7 +89,7 @@ class VideoSizeReducer(QWidget):
         # Audio Bitrate
         self.audio_bitrate = QWidget()
         self.audio_bitrate_layout = QHBoxLayout(self.audio_bitrate)
-        self.audio_bitrate_label = QLabel("Video codec")
+        self.audio_bitrate_label = QLabel("Audio Bitrate")
         self.audio_bitrate_combo = QComboBox(self)
         self.audio_bitrate_combo.addItem("96k", "96k")
         self.audio_bitrate_combo.addItem("128k", "128k")
@@ -98,7 +98,6 @@ class VideoSizeReducer(QWidget):
         self.audio_bitrate_combo.currentIndexChanged.connect(self.handle_audio_bitrate)
         self.audio_bitrate_layout.addWidget(self.audio_bitrate_label)
         self.audio_bitrate_layout.addWidget(self.audio_bitrate_combo)
-
 
         self.resolution.setStyleSheet("background-color: #262626")
         self.video_codec.setStyleSheet("background-color: #262626")
@@ -113,9 +112,7 @@ class VideoSizeReducer(QWidget):
         self.left_layout.addWidget(self.audio_bitrate)
 
         # Center layout
-        self.center_widget = QWidget()
-        self.center_layout = QVBoxLayout(self.center_widget)
-        self.center_layout.setContentsMargins(0, 0, 0, 0)
+        self.center_layout = QSplitter(Qt.Orientation.Vertical)
 
         # Center top layout for scroll area
         self.video_container = QWidget()
@@ -124,17 +121,17 @@ class VideoSizeReducer(QWidget):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setMinimumHeight(400)
-        self.scroll_area.setMinimumWidth(500)
+        self.scroll_area.setMinimumWidth(560)
         self.scroll_area.setWidget(self.video_container)
 
         # Center bottom layout for buttons
         self.center_bottom_widget = QWidget()
         center_bottom_layout = QHBoxLayout(self.center_bottom_widget)
+        self.center_bottom_widget.setFixedHeight(200)
 
         self.buttons_widget = QWidget()
         self.buttons_layout = QVBoxLayout(self.buttons_widget)
         self.buttons_layout.setContentsMargins(0,0,0,0)
-
 
         self.select_videos_button = QPushButton("Select Video")
         self.select_videos_button.clicked.connect(self.select_videos)
@@ -152,12 +149,6 @@ class VideoSizeReducer(QWidget):
         self.output_videos_path_button = QPushButton("Select output path")
         self.output_videos_path_button.clicked.connect(self.handle_output_videos_path)
         self.output_videos_path_button.setEnabled(False)
-
-        self.select_videos_button.setFixedWidth(200)
-        self.remove_video_button.setFixedWidth(200)
-        self.add_video_button.setFixedWidth(200)
-        self.confirm_reduce_button.setFixedWidth(200)
-        self.output_videos_path_button.setFixedWidth(200)
 
         self.buttons_layout.addWidget(self.select_videos_button)
         self.buttons_layout.addWidget(self.remove_video_button)
@@ -180,20 +171,21 @@ class VideoSizeReducer(QWidget):
         self.general_info_layout.addWidget(self.reduced_size)
 
         center_bottom_layout.addWidget(self.general_info)
-        center_bottom_layout.addWidget(self.buttons_widget, alignment=Qt.AlignmentFlag.AlignRight)
+        center_bottom_layout.addWidget(self.buttons_widget)
 
-        self.center_layout.addWidget(self.scroll_area, alignment=Qt.AlignmentFlag.AlignTop)
+        self.center_layout.addWidget(self.scroll_area)
         self.center_layout.addWidget(self.center_bottom_widget)
 
         # Right layout for video info
         self.right_widget = QWidget()
         self.right_layout = QVBoxLayout(self.right_widget)
         self.right_widget.setMinimumWidth(200)
+        self.right_widget.setMaximumWidth(500)
 
         # Video name
         self.video_name = QWidget()
         self.video_name_layout = QVBoxLayout(self.video_name)
-        self.video_name_label = QLabel("Video Name:")
+        self.video_name_label = QLabel("Video Name: ")
         self.video_name_text = QLabel()
         self.video_name_layout.addWidget(self.video_name_label)
         self.video_name_layout.addWidget(self.video_name_text)
@@ -201,15 +193,16 @@ class VideoSizeReducer(QWidget):
         # Video info
         self.video_info = QWidget()
         self.video_info_layout = QVBoxLayout(self.video_info)        
-        self.video_info_label = QLabel("Video Info:")
+        self.video_info_label = QLabel("Video Info: ")
         self.video_info_text = QLabel()
+        self.video_info_text.setWordWrap(True)
         self.video_info_layout.addWidget(self.video_info_label)
         self.video_info_layout.addWidget(self.video_info_text)
 
         # Aufio info
         self.audio_info = QWidget()
         self.audio_info_layout = QVBoxLayout(self.audio_info)
-        self.audio_info_label = QLabel("Audio Info:")
+        self.audio_info_label = QLabel("Audio Info: ")
         self.audio_info_text = QLabel()
         self.audio_info_layout.addWidget(self.audio_info_label)
         self.audio_info_layout.addWidget(self.audio_info_text)
@@ -224,8 +217,10 @@ class VideoSizeReducer(QWidget):
 
         # Add all layouts to the main layout
         self.main_layout.addWidget(self.left_widget)
-        self.main_layout.addWidget(self.center_widget)
+        self.main_layout.addWidget(self.center_layout)
         self.main_layout.addWidget(self.right_widget)
+
+        self.setCentralWidget(self.main_layout)
 
         if is_dark_theme():
             self.apply_video_decrease_size_dark_theme()
@@ -286,8 +281,8 @@ class VideoSizeReducer(QWidget):
 
             video_info, audio_info = self.get_video_info(video_files[0])
             self.video_name_text.setText(os.path.basename(video_files[0]))
-            self.video_info_label.setText(video_info)
-            self.audio_info_label.setText(audio_info)
+            self.video_info_label.setText(f"Video Info: \n\n{video_info}")
+            self.audio_info_label.setText(f"Audio Info: \n\n{audio_info}")
 
     def calculate_videos_size(self):
         total_size = 0.0
@@ -315,7 +310,6 @@ class VideoSizeReducer(QWidget):
                 row_widget.setStyleSheet("background-color: #f5f5f5; border-radius: 4px")
 
             row_widget.setLayout(row_layout)
-            row_widget.setFixedWidth(480)
 
             preview = self.extract_frame(file)
 
@@ -416,17 +410,17 @@ class VideoSizeReducer(QWidget):
                 video_duration = f"{minutes}:{seconds}"
 
             video_metadata = (
-                f"Format: {format}\n"
-                f"File Size: {file_size} MB\n"
-                f"Duration: {video_duration}\n"
-                f"Codec: {video_codec}\n"
+                f"Format:          {format}\n"
+                f"File Size:       {file_size} MB\n"
+                f"Duration:        {video_duration}\n"
+                f"Codec:           {video_codec}\n"
                 f"Codec Long Name: {codec_long_name}\n"
-                f"Resolution: {width}x{height}\n"
-                f"Bitrate: {video_bitrate}\n"
-                f"Frame Rate: {frame_rate}\n"
-                f"Pixel Format: {pixel_format}\n"
-                f"Aspect Ratio: {aspect_ratio}\n"
-                f"Frame Count: {frame_count}\n"
+                f"Resolution:      {width}x{height}\n"
+                f"Bitrate:         {video_bitrate}\n"
+                f"Frame Rate:      {frame_rate}\n"
+                f"Pixel Format:    {pixel_format}\n"
+                f"Aspect Ratio:    {aspect_ratio}\n"
+                f"Frame Count:     {frame_count}\n"
             )
 
             if audio_streams:
@@ -438,12 +432,12 @@ class VideoSizeReducer(QWidget):
                     audio_language = stream.get("tags", {}).get("language", "N/A")
 
                 audio_metadata = (
-                    f"Codec: {audio_codec}\n"
+                    f"Codec:           {audio_codec}\n"
                     f"Codec Long Name: {codec_long_name}\n"
-                    f"Sample Rate: {sample_rate}\n"
-                    f"Channels: {channels}\n"
-                    f"Bitrate: {audio_bitrate}\n"
-                    f"Language: {audio_language}\n"
+                    f"Sample Rate:     {sample_rate}\n"
+                    f"Channels:        {channels}\n"
+                    f"Bitrate:         {audio_bitrate}\n"
+                    f"Language:        {audio_language}\n"
                 )
 
             return video_metadata, audio_metadata

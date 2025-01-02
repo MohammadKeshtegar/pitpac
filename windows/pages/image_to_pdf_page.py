@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QFileDialog, QLabel
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QPushButton, QFileDialog, QLabel
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 
-from pages.page import Page
+from utils.backButton import BackButton
 
 from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
@@ -11,9 +11,9 @@ from utils.notification import notification
 import img2pdf
 import os
 
-class Image2PDFPage(Page):
+class Image2PDFPage(QMainWindow):
     def __init__(self, mainWindowObject):
-        super().__init__(mainWindowObject)
+        super().__init__()
         self.mainWindowObject = mainWindowObject
         self.setup_img2pdf_page()
 
@@ -24,7 +24,7 @@ class Image2PDFPage(Page):
         layout = QVBoxLayout(self.central_widget)
 
         # Redirect button
-        self.redirect_button()
+        self.back_button = BackButton(mainWindowObject=self.mainWindowObject)
 
         # Creating scroll area
         self.scroll_area = QScrollArea()
@@ -71,7 +71,7 @@ class Image2PDFPage(Page):
 
         buttons_layout.addWidget(self.button_img_to_pdf_save, alignment=Qt.AlignmentFlag.AlignRight)
 
-        layout.addWidget(self.redirect_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.back_button, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.scroll_area)
         layout.addWidget(self.buttons_container)
 
@@ -175,6 +175,7 @@ class Image2PDFPage(Page):
 
     # Img to pdf styles
     def apply_img_to_pdf_dark_style(self):
+        self.central_widget.setStyleSheet("background-color: #262626")
         self.scroll_area.setStyleSheet(scroll_area_dark_style)
         self.image_container.setStyleSheet("background-color: #333333")
         self.button_img_to_pdf_select.setStyleSheet(button_dark_style)
@@ -183,6 +184,7 @@ class Image2PDFPage(Page):
         self.button_img_to_pdf_save.setStyleSheet(button_dark_style)
 
     def apply_img_to_pdf_light_style(self):
+        self.central_widget.setStyleSheet("background-color: #e5e5e5")
         self.scroll_area.setStyleSheet(scroll_area_light_style)
         self.image_container.setStyleSheet("background-color: #a5a5a5")
         self.button_img_to_pdf_select.setStyleSheet(button_light_style)

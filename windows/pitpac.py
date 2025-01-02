@@ -3,8 +3,7 @@ from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt
 
 from utils.styles import button_size, button_dark_style, button_light_style
-from utils.assets import is_dark_theme, PATH_TO_FILE
-from utils.assets import settings
+from utils.assets import is_dark_theme, PATH_TO_FILE, settings
 
 from pages.text_from_image_page import TextFromImagePage
 from pages.image_resizer_page import ImageResizerPage
@@ -156,6 +155,8 @@ class MainWindow(QMainWindow):
             self.about_window.close()
         if self.video_size_reducer_window:
             self.video_size_reducer_window.close()
+        if self.image_resizer_page.image_display_window:
+            self.image_resizer_page.image_display_window.close()
         self.close()
 
     def show_about_window(self):
