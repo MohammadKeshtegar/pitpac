@@ -6,6 +6,9 @@ from qtwidgets import Toggle
 from utils.assets import save_theme_preference, settings, is_dark_theme, START_LOCATION
 from utils.styles import button_dark_style, button_light_style, settings_option_dark_style, settings_option_light_style
 
+import sys
+import os
+
 class SettingsWindow(QWidget):
     def __init__(self, mainWindowObject, aboutWindowObject):
         super().__init__()
@@ -203,9 +206,8 @@ class SettingsWindow(QWidget):
         self.mainWindowObject.initUI()
 
     def reload_main_window(self):
-        self.mainWindowObject.close()
-        self.mainWindowObject.__init__()
-        self.mainWindowObject.show()
+        python = sys.executable
+        os.execl(python, python, * sys.argv)
 
     def settings_dark_style(self):
         self.setStyleSheet("background-color: #1e1e1e")

@@ -41,8 +41,8 @@ class ImageDisplayWindow(QMainWindow):
 
         self.graphics_scene = QGraphicsScene(self)
 
-        self.graphics_view = QGraphicsView(self.graphics_scene) 
-        self.graphics_view.setRenderHint(QPainter.Antialiasing) 
+        self.graphics_view = QGraphicsView(self.graphics_scene)
+        self.graphics_view.setRenderHint(QPainter.Antialiasing)
         self.graphics_view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse) 
         self.graphics_view.setResizeAnchor(QGraphicsView.AnchorUnderMouse) 
         self.graphics_view.setDragMode(QGraphicsView.ScrollHandDrag)

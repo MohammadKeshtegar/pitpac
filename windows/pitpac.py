@@ -16,7 +16,7 @@ from about import AboutWindow
 
 import sys
 
-class MainWindow(QMainWindow):
+class Pitpac(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -84,16 +84,6 @@ class MainWindow(QMainWindow):
         self.settings_button.setFixedWidth(button_size)
         self.about_button.setFixedWidth(button_size)
         self.close_app_button.setFixedWidth(button_size)
-
-        # buttons font family and size
-        self.image2pdf_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.pdf_combiner_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.image_resizer_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.text_from_image_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.video_size_reducer_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.settings_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.about_button.setFont(QFont(settings.font_family, settings.font_size))
-        self.close_app_button.setFont(QFont(settings.font_family, settings.font_size))
 
         # Setting buttons function
         self.pdf_combiner_button.clicked.connect(self.show_pdf_combiner_page)
@@ -195,6 +185,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    app.setFont(QFont(settings.font_family, settings.font_size))
+    window = Pitpac()
     window.show()
     sys.exit(app.exec_())
