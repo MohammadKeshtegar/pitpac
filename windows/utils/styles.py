@@ -26,7 +26,7 @@ scroll_area_light_style = """
     QScrollBar::handle:vertical:pressed { background-color: #333333 }
     QScrollBar:horizontal { background-color: #b5b5b5; border: 1px solid #737373 }
     QScrollBar::handle:horizontal { margin: 0 16px; border-radius: 2px; border: 1px solid #626262; background-color: #7f7f7f }
-    QScrollBar::handle:horizontal:pressed { background-color: #333333 }
+    QScrollBar::handle:horizontal:pressed { background-color: #555555 }
     QScrollArea { background-color: #646464 }
 """
 
