@@ -9,7 +9,6 @@ from utils.guides import RESOLUTION_GUIDE, VIDEO_CODEC_GUIDE, VIDEO_BITRATE_GUID
 from utils.styles import  button_dark_style, button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
 
-import subprocess
 import ffmpeg
 import sys
 import io
@@ -21,6 +20,7 @@ class VideoSizeReducer(QMainWindow):
         self.setWindowTitle("Decrease video size")
         self.setGeometry(500, 250, 800, 600)
         self.setObjectName("VideoSizeReducer")
+        self.is_default_video_bitrate = False
         self.setup_video_decrease_size_page()
         self.set_styles()
 
@@ -248,20 +248,33 @@ class VideoSizeReducer(QMainWindow):
         self.buttons_layout.addWidget(self.confirm_reduce_button)
         self.buttons_layout.addWidget(self.exit_button)
         
+        self.center_left = QWidget()
+        self.center_left.setFixedWidth(265)
+        self.center_left_layout = QVBoxLayout(self.center_left)
+        self.center_left_layout.setContentsMargins(0, 0, 0, 0)
+
         self.general_info = QWidget()
-        self.general_info.setFixedWidth(265)
         self.general_info_layout = QVBoxLayout(self.general_info)
         self.general_info.setStyleSheet("background-color: #262626")
-        
+
         self.selected_videos = QLabel("Selected videos: ")
         self.total_size = QLabel("Total size: ")
-        self.progress_bar = QProgressBar()
 
         self.general_info_layout.addWidget(self.selected_videos)
         self.general_info_layout.addWidget(self.total_size)
-        self.general_info_layout.addWidget(self.progress_bar, alignment=Qt.AlignmentFlag.AlignBottom)
 
-        self.center_bottom_layout.addWidget(self.general_info)
+        self.process_info = QWidget()
+        self.process_info.setStyleSheet("background-color: #262626")
+        self.process_info_layout = QVBoxLayout(self.process_info)
+        
+        self.progress_bar = QProgressBar()
+
+        self.process_info_layout.addWidget(self.progress_bar)
+
+        self.center_left_layout.addWidget(self.general_info)
+        self.center_left_layout.addWidget(self.process_info)
+
+        self.center_bottom_layout.addWidget(self.center_left)
         self.center_bottom_layout.addWidget(self.buttons_widget)
 
         self.center_layout.addWidget(self.scroll_area)
