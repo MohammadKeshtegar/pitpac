@@ -4,7 +4,6 @@ from PyQt5.QtGui import QIcon
 from utils.assets import is_dark_theme, PATH_TO_FILE
 from utils.styles import button_dark_style, button_light_style
 
-
 class BackButton(QPushButton):
     def __init__(self, mainWindowObject, text=None):
         super().__init__()

@@ -10,7 +10,6 @@ from utils.styles import  button_dark_style, button_light_style
 from utils.assets import is_dark_theme, settings, PATH_TO_FILE
 
 import ffmpeg
-import sys
 import io
 import os
 
@@ -21,6 +20,13 @@ class VideoSizeReducer(QMainWindow):
         self.setGeometry(500, 250, 800, 600)
         self.setObjectName("VideoSizeReducer")
         self.is_default_video_bitrate = False
+
+        self.processes = []
+        self.total_frames = {}
+        self.video_durations = {}
+        self.current_video_index = 0
+        self.cancel_requested = False
+
         self.setup_video_decrease_size_page()
         self.set_styles()
 
@@ -239,8 +245,8 @@ class VideoSizeReducer(QMainWindow):
         self.confirm_reduce_button.clicked.connect(self.confirm_reduce)
         self.confirm_reduce_button.setEnabled(False)
         
-        self.exit_button = QPushButton("Exit")
-        self.exit_button.clicked.connect(self.exit_reduce)
+        self.exit_button = QPushButton("Cancel")
+        self.exit_button.clicked.connect(self.cancel_reduce)
 
         self.buttons_layout.addWidget(self.select_videos_button)
         self.buttons_layout.addWidget(self.remove_video_button)
@@ -266,9 +272,12 @@ class VideoSizeReducer(QMainWindow):
         self.process_info = QWidget()
         self.process_info.setStyleSheet("background-color: #262626")
         self.process_info_layout = QVBoxLayout(self.process_info)
-        
+
+        self.finished_videos = QLabel("Done: ")
+
         self.progress_bar = QProgressBar()
 
+        self.process_info_layout.addWidget(self.finished_videos)
         self.process_info_layout.addWidget(self.progress_bar)
 
         self.center_left_layout.addWidget(self.general_info)
@@ -333,50 +342,152 @@ class VideoSizeReducer(QMainWindow):
 
     def confirm_reduce(self):
         output_path = QFileDialog.getExistingDirectory(None, "Select folder to save", settings.location)
-        for video in self.video_files:
-            command = [
-                "ffmpeg",
-                "-i", f'"{video}"',
-                "-vf", f"scale={self.resolution_combo.currentData()}" ,
-                "-c:v", self.video_codec_combo.currentData(),
-                "-c:a", self.audio_codec_combo.currentData()
-                ]
-            if self.video_bitrate_field.text() != '':
-                command.append("-b:v", self.video_bitrate_field.text())
-            if self.audio_bitrate_field.text() != '':
-                command.append("-b:a", self.audio_bitrate_field.text())
+        self.output_path = output_path
+        self.current_video_index = 0
+        self.cancel_requested = False
+        self.start_processing_next_video()
 
-            output_file = os.path.join(output_path, os.path.basename(video))
-            command.append(f'"{output_file}"')
+    def start_processing_next_video(self):
+        if self.cancel_requested or self.current_video_index >= len(self.video_files):
+            print("All videos processed")
+            return
+        
+        video = self.video_files[self.current_video_index]
+        duration = self.get_video_duration(video)
+        if duration > 0:
+            self.total_frames[video] = self.get_total_frames(video)
+            self.video_durations[video] = duration
+            output_file = os.path.join(self.output_path, os.path.basename(video))
+            
+            if os.path.exists(output_file):
+                reply = QMessageBox.question(
+                    None,
+                    "File Exists",
+                    f"The file '{os.path.basename(output_file)}' already exists. Do you want to overwrite it?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
 
-            self.run_command(command)
+                if reply == QMessageBox.No:
+                    print(f"Skipping video {video} due to existing file")
+                    self.current_video_index += 1
+                    self.start_processing_next_video()
+                    return
 
-    def run_command(self, command):
-        self.process = QProcess(self)
-        self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        self.process.finished.connect(self.on_process_finished)
-        self.process.readyReadStandardOutput.connect(self.update_progress)
-        print(" ".join(command))
-        self.process.start(" ".join(command))
+            self.process_video(video, self.output_path)
+        else:
+            print(f"Skipping video {video} due to invalid duration")
+            self.current_video_index += 1
+            self.start_processing_next_video()
 
-    def update_progress(self):
-        output = str(self.process.readAllStandardOutput(), "utf-8")
+    def process_video(self, video, output_path):
+        command = [
+            "ffmpeg",
+            "-i", f'"{video}"',
+            "-vf", f"scale={self.resolution_combo.currentData()}",
+            "-c:v", self.video_codec_combo.currentData(),
+            "-c:a", self.audio_codec_combo.currentData()
+        ]
+        if self.video_bitrate_field.text() != '':
+            command.extend(["-b:v", self.video_bitrate_field.text()])
+        if self.audio_bitrate_field.text() != '':
+            command.extend(["-b:a", self.audio_bitrate_field.text()])
+
+        output_file = os.path.join(output_path, os.path.basename(video))
+        if os.path.exists(output_file):
+            command.append('-y')  # Overwrite existing file if user agrees
+
+        command.append(f'"{output_file}"')
+
+        self.run_command(video, command)
+
+    def run_command(self, video, command):
+        process = QProcess(self)
+        self.processes.append(process)
+        process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        process.finished.connect(lambda exit_code, exit_status, v=video, p=process: self.on_process_finished(exit_code, exit_status, v, p))
+        process.readyReadStandardOutput.connect(lambda v=video, p=process: self.update_progress(v, p))
+        process.start(" ".join(command))
+
+    def update_progress(self, video, process):
+        output = str(process.readAllStandardOutput(), "utf-8")
 
         if "time=" in output:
             time_str = output.split("time=")[-1].split(" ")[0]
             time_parts = time_str.split(':')
-            print(time_str)
-            print(time_parts)
-            seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + float(time_parts[2])
 
-            progress = (seconds / self.video_duration) * 100
-            print(progress)
-            self.progress_bar.setValue(int(progress))
+            if 'N/A' in time_parts:
+                return
 
-    def on_process_finished(self, exit_code, exit_status):
+            try:
+                seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + float(time_parts[2])
+                if self.video_durations[video] > 0:
+                    progress = (seconds / self.video_durations[video]) * 100
+                    self.progress_bar.setValue(int(progress))
+            except ValueError as e:
+                print(f"Error in parsing time: {e}")
+
+    def on_process_finished(self, exit_code, exit_status, video, process):
         self.progress_bar.setValue(100)
-        self.process.terminate()
-        self.process.waitForFinished()
+        process.terminate()
+        process.waitForFinished()
+        self.progress_bar.reset()
+        self.current_video_index += 1
+        self.finished_videos.setText(f"Done: {self.current_video_index}/{len(self.video_files)}")
+        self.start_processing_next_video()
+
+    def get_total_frames(self, video_file):
+        command = [
+            "ffmpeg",
+            "-i", video_file,
+            "-map", "0:v:0",
+            "-c", "copy",
+            "-f", "null",
+            "-"
+        ]
+        process = QProcess(self)
+        process.start(" ".join(command))
+        process.waitForFinished()
+
+        output = str(process.readAllStandardError(), "utf-8")
+        for line in output.split('\n'):
+            if "frame=" in line:
+                return int(line.split('=')[1].strip())
+
+        return 0
+    
+    def get_video_duration(self, video_file):
+        command = [
+            "ffprobe",
+            "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            f'"{video_file}"'
+        ]
+        process = QProcess(self)
+        process.start(" ".join(command))
+        process.waitForFinished()
+
+        output = str(process.readAllStandardOutput(), "utf-8").strip()
+
+        if output:
+            try:
+                return float(output)
+            except ValueError as e:
+                print(f"Error in parsing video duration: {e}")
+                return 0.0
+        else:
+            print("No duration output from ffprobe")
+            return 0.0
+
+    def cancel_reduce(self):
+        self.cancel_requested = True
+        for process in self.processes:
+            if process.state() == QProcess.ProcessState.Running:
+                process.terminate()
+                process.waitForFinished()
+        self.progress_bar.reset()
+        self.processes.clear()
 
     def set_video_bitrate_min_max(self):
         match self.video_codec_combo.currentData():
@@ -482,17 +593,18 @@ class VideoSizeReducer(QMainWindow):
             self.set_video_bitrate_min_max()
             self.set_audio_bitrate_min_max()
 
-            self.video_bitrate_field.setValidator(QIntValidator(0,self.max_video_bit))
-            self.audio_bitrate_field.setValidator(QIntValidator(0,self.max_audio_bit))
+            self.video_bitrate_field.setValidator(QIntValidator(0, self.max_video_bit))
+            self.audio_bitrate_field.setValidator(QIntValidator(0, self.max_audio_bit))
 
             self.handle_increase_decrease_video_bitreate_buttons()
             self.handle_increase_decrease_audio_bitreate_buttons()
 
             self.video_files = video_files
             self.display_selected_vidoes(self.video_layout)
-            total_size= self.calculate_videos_size()
-            self.total_size.setText(f"Total size:  {str(total_size)} {"GB" if total_size > 1000 else " MB"}")
+            total_size, final_unit = self.calculate_videos_size()
+            self.total_size.setText(f"Total size:  {str(total_size)} {final_unit}")
             self.selected_videos.setText(f"Selected videos:  {(len(self.video_files))}")
+            self.finished_videos.setText(f"Done: {self.current_video_index}/{len(self.video_files)}")
 
             self.remove_video_button.setEnabled(True)
             self.add_video_button.setEnabled(True)
@@ -523,7 +635,15 @@ class VideoSizeReducer(QMainWindow):
             file_size = format_info.get("size", "N/A")
             file_size, _ = self.calculate_video_size(file_size)
             total_size += float(file_size)
-        return total_size
+
+        if total_size > 1000 :
+            total_size = round(total_size / 1000, 2)
+            final_unit = "GB"
+        else:
+            total_size = round(total_size, 2)
+            final_unit = "MB"
+
+        return total_size, final_unit
 
     def display_selected_vidoes(self, layout):
         for i in reversed(range(layout.count())):
@@ -604,13 +724,6 @@ class VideoSizeReducer(QMainWindow):
 
         except Exception as e:
             print(colored(f"An error occurered: {e}", "red"))
-
-    def exit_reduce(self):
-
-        if hasattr(self, 'process') and self.process.state() == QProcess.ProcessState.Running:
-            self.process.terminate()
-            self.process.waitForFinished()
-        self.close()
 
     def get_video_info(self, file_path):
         try:

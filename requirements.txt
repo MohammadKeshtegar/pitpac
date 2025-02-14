@@ -17,9 +17,9 @@ pyqt-toast-notification 1.3.2
 PyQt5                   5.15.11
 PyQt5-Qt5               5.15.15
 PyQt5_sip               12.15.0
-PyQt6                   6.7.1
-PyQt6-Qt6               6.7.3
-PyQt6_sip               13.8.0
+PyQt5                   6.7.1
+PyQt5-Qt6               6.7.3
+PyQt5_sip               13.8.0
 pyqtspinner             2.0.0
 pytesseract             0.3.13
 python-dotenv           1.0.1
