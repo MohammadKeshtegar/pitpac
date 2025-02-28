@@ -79,14 +79,19 @@ class ImageResizerPage(QMainWindow):
         self.height_input.textChanged.connect(self.height_input_changed)
 
         # Aspect ratio
-        self.aspect_ratio_check = QCheckBox("Aspect ratio", self)
+        self.aspect_ratio_check = QCheckBox("Aspect Ratio", self)
         self.aspect_ratio_check.setChecked(True)
+
+        # Convert to icon
+        self.convert_to_icon_check = QCheckBox("Convert to Icon", self)
+        self.convert_to_icon_check.setChecked(False)
 
         # Layout for width and height inputs
         width_height_layout = QVBoxLayout()
-        width_height_layout.addWidget(self.aspect_ratio_check)
         width_height_layout.addWidget(self.width_input)
         width_height_layout.addWidget(self.height_input)
+        width_height_layout.addWidget(self.aspect_ratio_check)
+        width_height_layout.addWidget(self.convert_to_icon_check)
 
         # Layout for buttons
         button_layout = QVBoxLayout()
@@ -104,7 +109,6 @@ class ImageResizerPage(QMainWindow):
         layout.addWidget(self.back_button)
         layout.addWidget(self.images_scroll_area)
         layout.addLayout(width_height_buttons_layout)
-        # layout.addWidget(self.aspect_ratio_check)
 
         if is_dark_theme():
             self.apply_image_resizer_page_dark_style()
@@ -282,12 +286,28 @@ class ImageResizerPage(QMainWindow):
 
     def save_resized_image(self):
         if self.image:
-            new_size = (int(self.width_input.text()), int(self.height_input.text()))
-            resized_image = self.image.resize(new_size, Image.Resampling.LANCZOS)
-            save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif);;All Files (*)")
-            if save_path:
-                resized_image.save(save_path)
-                notification(self, "Resized images saved!")
+            for image in self.image:
+                new_size = (int(self.width_input.text()), int(self.height_input.text()))
+                resized_image = image.resize(new_size, Image.Resampling.LANCZOS)
+
+                save_path, _ = QFileDialog.getSaveFileName(self, "Save Image", settings.location, "Image Files (*.png *.jpg *.jpeg *.gif *.ico);;All Files (*)")
+                if save_path:
+                    if self.convert_to_icon_check.isChecked():
+                        self.convert_image_to_icon(resized_image, save_path)
+                    else:
+                        resized_image.save(save_path)
+            notification(self, "Images saved!")
+
+    def convert_image_to_icon(self, pil_image, save_path):
+        pil_image = pil_image.convert("RGBA")
+        data = pil_image.tobytes("raw", "RGBA")
+        q_image = QImage(data, pil_image.width, pil_image.height, QImage.Format.Format_RGBA8888)
+
+        pixmap = QPixmap.fromImage(q_image)
+        icon = QIcon(pixmap)
+
+        icon_pixmap = icon.pixmap(256, 256)
+        icon_pixmap.save(save_path, "ICO")
 
     def apply_image_resizer_page_dark_style(self):
         self.images_scroll_area.setStyleSheet(scroll_area_dark_style)
