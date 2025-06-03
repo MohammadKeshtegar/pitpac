@@ -1,8 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout, QSizePolicy
 from PyQt5.QtCore import Qt
 
-from utils.styles import button_dark_style, button_light_style
-from utils.assets import is_dark_theme
+from utils.styles import button_dark_style
 
 class AboutWindow(QWidget):
     def __init__(self):
@@ -44,20 +43,11 @@ class AboutWindow(QWidget):
 
         layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        if is_dark_theme():
-            self.apply_about_dark_style()
-        else:
-            self.apply_about_light_style()
-
-        self.setLayout(layout)
+        self.apply_about_dark_style()
 
     def apply_about_dark_style(self):
         self.setStyleSheet("background-color: #222222")
         self.ok_button.setStyleSheet(button_dark_style)
-
-    def apply_about_light_style(self):
-        self.setStyleSheet("background-color: #f5f5f5; color: #222222")
-        self.ok_button.setStyleSheet(button_light_style)
 
     def close_about(self):
         self.close()

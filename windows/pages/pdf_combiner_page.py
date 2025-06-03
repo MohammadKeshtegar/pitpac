@@ -1,19 +1,22 @@
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QScrollArea, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLabel
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QImage
 from PyQt5.QtCore import Qt
 
-from utils.backButton import BackButton
+from components.BackButton import BackButton
 
-from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
-from utils.assets import is_dark_theme, settings, PATH_TO_FILE
+from utils.styles import button_dark_style, remove_button_dark_style
+from utils.assets import  settings, PATH_TO_FILE
 from utils.notification import notification
 
 import PyPDF4
+import fitz
+import os
 
 class PDFCombinerPage(QMainWindow):
     def __init__(self, mainWindowObject):
         super().__init__()
         self.mainWindowObject = mainWindowObject
+        self.setObjectName("PDFCombiner")
         self.setup_pdf_combiner_page()
         
     def setup_pdf_combiner_page(self):
@@ -72,10 +75,7 @@ class PDFCombinerPage(QMainWindow):
         buttons_layout.addWidget(self.button_pdf_combiner_save)
         buttons_layout.setAlignment(self.button_pdf_combiner_save, Qt.AlignRight)
 
-        if is_dark_theme():
-            self.apply_pdf_combiner_dark_style()
-        else:
-            self.apply_pdf_combiner_light_style()
+        self.apply_pdf_combiner_dark_style()
 
         self.button_pdf_combiner_select.clicked.connect(self.open_pdf_dialog)
         self.button_pdf_combiner_add.clicked.connect(self.add_pdf)
@@ -96,55 +96,127 @@ class PDFCombinerPage(QMainWindow):
             self.button_pdf_combiner_add.setEnabled(True)
 
     def display_selected_pdfs(self):    
+        # Clear existing widgets
         for i in reversed(range(self.pdf_layout.count())):
             widget_to_remove = self.pdf_layout.itemAt(i).widget()
             self.pdf_layout.removeWidget(widget_to_remove)
             widget_to_remove.setParent(None)
 
-        for file in self.pdf_files:
+        for index, file in enumerate(self.pdf_files):
             row_widget = QWidget()
             row_layout = QHBoxLayout()
-            if is_dark_theme():
-                row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
-            else:
-                row_widget.setStyleSheet("background-color: #e5e5e5; border-radius: 4px")
-            
+            row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
             row_widget.setLayout(row_layout)
             row_widget.setFixedHeight(120)
+            row_widget.setCursor(Qt.PointingHandCursor)
 
+            # Remove button
             remove_button = QPushButton()
-            if is_dark_theme():
-                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
-            else:
-                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-light.svg"))
-
+            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             remove_button.setFixedSize(30, 30)
-            if is_dark_theme():
-                remove_button.setStyleSheet(remove_button_dark_style)
-            else:
-                remove_button.setStyleSheet(remove_button_light_style)
-
+            remove_button.setStyleSheet(remove_button_dark_style)
             remove_button.clicked.connect(lambda _, f=file: self.remove_pdf(f))
             row_layout.addWidget(remove_button)
 
+            # PDF thumbnail
             label = QLabel()
-            pixmap = QPixmap(file)
-            label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio))
+            pixmap = self.get_pdf_thumbnail(file)
+            if pixmap and not pixmap.isNull():
+                label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio))
+            else:
+                # Fallback to generic PDF icon
+                icon_path = f"{PATH_TO_FILE}pdf-icon.png"  # Replace with your icon path
+                if os.path.exists(icon_path):
+                    label.setPixmap(QPixmap(icon_path).scaled(100, 100, Qt.KeepAspectRatio))
+                else:
+                    label.setText("No Preview")
+                print(f"No valid thumbnail generated for {file}")
+            label.setFixedSize(100, 100)
+            label.setStyleSheet("border: none;")
             row_layout.addWidget(label)
 
-            name_label = QLabel(file)
+            # PDF name
+            name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
             name_label.setFixedWidth(400)
-
-            if settings.mode  == "dark":
-                name_label.setStyleSheet("color: #a3a3a3")
-            else:
-                name_label.setStyleSheet("color: #000000")
-
+            name_label.setStyleSheet("color: #a3a3a3")
             row_layout.addWidget(name_label)
 
             self.pdf_layout.addWidget(row_widget)
             self.pdf_layout.setAlignment(Qt.AlignTop)
+
+    def get_pdf_thumbnail(self, pdf_file, zoom=1.0):
+        try:
+            # Verify file exists
+            if not os.path.exists(pdf_file):
+                print(f"Error: PDF file not found: {pdf_file}")
+                return None
+            
+            # Open PDF
+            doc = fitz.open(pdf_file)
+            if doc.page_count == 0:
+                print(f"Error: PDF has no pages: {pdf_file}")
+                doc.close()
+                return None
+            
+            # Check for encryption
+            if doc.is_encrypted:
+                print(f"Error: PDF is encrypted and cannot be rendered: {pdf_file}")
+                doc.close()
+                return None
+            
+            # Load first page
+            page = doc.load_page(0)
+            
+            # Check page dimensions
+            rect = page.rect
+            if rect.is_empty or rect.width <= 0 or rect.height <= 0:
+                print(f"Error: First page is empty or has invalid dimensions (width: {rect.width}, height: {rect.height}): {pdf_file}")
+                doc.close()
+                return None
+            
+            # Render page to pixmap
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+            if pix.width == 0 or pix.height == 0:
+                print(f"Error: Rendered pixmap is empty (width: {pix.width}, height: {pix.height}): {pdf_file}")
+                doc.close()
+                return None
+            
+            # Verify samples
+            expected_samples = pix.width * pix.height * pix.n
+            if not pix.samples or len(pix.samples) != expected_samples:
+                print(f"Error: Invalid pixmap samples (expected: {expected_samples}, got: {len(pix.samples)}, n: {pix.n}): {pdf_file}")
+                doc.close()
+                return None
+            
+            # Log pixmap details for debugging
+            print(f"Pixmap details for {pdf_file}: width={pix.width}, height={pix.height}, stride={pix.stride}, samples_size={len(pix.samples)}, n={pix.n}")
+            
+            # Create QImage
+            image = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format_RGB888)
+            if image.isNull():
+                print(f"Error: Failed to create QImage with Format_RGB888 for {pdf_file}. Trying Format_RGBA8888...")
+                # Fallback to RGBA8888
+                image = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format_RGBA8888)
+                if image.isNull():
+                    print(f"Error: Failed to create QImage with Format_RGBA8888 for {pdf_file}")
+                    doc.close()
+                    return None
+            
+            # Convert to QPixmap
+            pixmap = QPixmap.fromImage(image)
+            if pixmap.isNull():
+                print(f"Error: Failed to create QPixmap from QImage for {pdf_file}")
+                doc.close()
+                return None
+            
+            doc.close()
+            return pixmap
+        except Exception as e:
+            print(f"Unexpected error generating thumbnail for {pdf_file}: {str(e)}")
+            if 'doc' in locals():
+                doc.close()
+            return None
 
     def add_pdf(self):
         options = QFileDialog.Options()
@@ -180,19 +252,9 @@ class PDFCombinerPage(QMainWindow):
 
     # PDF combiner
     def apply_pdf_combiner_dark_style(self):
-        self.scroll_area.setStyleSheet(scroll_area_dark_style)
-        self.central_widget.setStyleSheet("background-color: #262626")
+        self.setStyleSheet("QWidget#PDFCombiner { background-color: #262626 } ")
         self.pdf_container.setStyleSheet("background-color: #333333")
         self.button_pdf_combiner_select.setStyleSheet(button_dark_style)
         self.button_pdf_combiner_add.setStyleSheet(button_dark_style)
         self.button_pdf_combiner_remove_all.setStyleSheet(button_dark_style)
         self.button_pdf_combiner_save.setStyleSheet(button_dark_style)
-
-    def apply_pdf_combiner_light_style(self):
-        self.scroll_area.setStyleSheet(scroll_area_light_style)
-        self.central_widget.setStyleSheet("background-color: #e5e5e5")
-        self.pdf_container.setStyleSheet("background-color: #a5a5a5")
-        self.button_pdf_combiner_select.setStyleSheet(button_light_style)
-        self.button_pdf_combiner_add.setStyleSheet(button_light_style)
-        self.button_pdf_combiner_remove_all.setStyleSheet(button_light_style)
-        self.button_pdf_combiner_save.setStyleSheet(button_light_style)

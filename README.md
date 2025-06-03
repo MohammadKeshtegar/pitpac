@@ -38,3 +38,5 @@ QFont::fromString: Invalid description 'Fira Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,
 That's ok, you can use the app without any issue. That's because in the qt5 app the fonts are not applied correctly, unlike qt6 which this issue is fixed in it.
 
 If you faced any unexpected issue you can contact me in [@MohammadKeshtegar](https://t.me/Mohammadkeshtegar1401)
+
+adding process tab for video sizse reducer, Removing light style

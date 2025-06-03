@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QPushButton, QLabel, QVBoxLayout, QFileDialog, QComboBox, QHBoxLayout, QScrollArea, QSplitter, QLineEdit, QMessageBox, QProgressBar
+from PyQt5.QtWidgets import QMainWindow, QWidget, QPushButton, QLabel, QVBoxLayout, QFileDialog, QComboBox, QHBoxLayout, QScrollArea, QSplitter, QLineEdit, QMessageBox, QProgressBar, QTabWidget
 from PyQt5.QtGui import QImage, QPixmap, QIntValidator, QIcon
 from PyQt5.QtCore import Qt, QProcess
 from PIL import Image
@@ -6,9 +6,10 @@ from PIL import Image
 from termcolor import colored
 
 from utils.guides import RESOLUTION_GUIDE, VIDEO_CODEC_GUIDE, VIDEO_BITRATE_GUIDE, AUDIO_BITRATE_GUIDE, AUDIO_CODEC_GUIDE
-from utils.styles import  button_dark_style, button_light_style
-from utils.assets import is_dark_theme, settings, PATH_TO_FILE
+from utils.styles import  button_dark_style, remove_button_dark_style
+from utils.assets import settings, PATH_TO_FILE
 
+import subprocess
 import ffmpeg
 import io
 import os
@@ -17,18 +18,20 @@ class VideoSizeReducer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Decrease video size")
-        self.setGeometry(500, 250, 800, 600)
+        self.setGeometry(400, 250, 800, 600)
         self.setObjectName("VideoSizeReducer")
         self.is_default_video_bitrate = False
 
         self.processes = []
+        self.last_time = {}
         self.total_frames = {}
+        self.process_items = {}
         self.video_durations = {}
         self.current_video_index = 0
         self.cancel_requested = False
 
         self.setup_video_decrease_size_page()
-        self.set_styles()
+        # self.set_styles()
 
     def setup_video_decrease_size_page(self):
         self.main_layout = QSplitter(Qt.Orientation.Horizontal, self)
@@ -220,7 +223,7 @@ class VideoSizeReducer(QMainWindow):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setMinimumHeight(400)
-        self.scroll_area.setMinimumWidth(560)
+        self.scroll_area.setMinimumWidth(600)
         self.scroll_area.setWidget(self.video_container)
 
         # Center bottom layout for buttons
@@ -235,9 +238,6 @@ class VideoSizeReducer(QMainWindow):
         self.select_videos_button = QPushButton("Select Video")
         self.select_videos_button.clicked.connect(self.select_videos)
 
-        self.remove_video_button = QPushButton("Remove Selected Video")
-        self.remove_video_button.setEnabled(False)
-
         self.add_video_button = QPushButton("Add Video")
         self.add_video_button.setEnabled(False)
 
@@ -245,13 +245,17 @@ class VideoSizeReducer(QMainWindow):
         self.confirm_reduce_button.clicked.connect(self.confirm_reduce)
         self.confirm_reduce_button.setEnabled(False)
         
-        self.exit_button = QPushButton("Cancel")
-        self.exit_button.clicked.connect(self.cancel_reduce)
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.cancel_reduce)
+        self.cancel_button.setEnabled(False)
+        
+        self.exit_button = QPushButton("Exit")
+        self.exit_button.clicked.connect(self.exit_video_size_reducer)
 
         self.buttons_layout.addWidget(self.select_videos_button)
-        self.buttons_layout.addWidget(self.remove_video_button)
         self.buttons_layout.addWidget(self.add_video_button)
         self.buttons_layout.addWidget(self.confirm_reduce_button)
+        self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.exit_button)
         
         self.center_left = QWidget()
@@ -288,6 +292,44 @@ class VideoSizeReducer(QMainWindow):
 
         self.center_layout.addWidget(self.scroll_area)
         self.center_layout.addWidget(self.center_bottom_widget)
+
+        # Processed videos
+        self.processed_videos_container = QWidget()
+        self.processed_videos_container_layout = QVBoxLayout(self.processed_videos_container)
+
+        self.processed_videos_scroll_area = QScrollArea()
+        self.processed_videos_scroll_area.setWidgetResizable(True)
+        self.processed_videos_scroll_area.setMinimumHeight(400)
+        self.processed_videos_scroll_area.setMinimumWidth(560)
+        self.processed_videos_scroll_area.setWidget(self.processed_videos_container)
+
+        self.processed_videos_container_layout.addWidget(self.processed_videos_container)
+
+        self.tab_widget = QTabWidget()
+        
+        # First tab for video container
+        self.video_tab = QWidget()
+        self.video_tab_layout = QVBoxLayout(self.video_tab)
+
+        # Move video container and center bottom widget to first tab
+        self.video_tab_layout.addWidget(self.scroll_area)
+        self.video_tab_layout.addWidget(self.center_bottom_widget)
+        self.video_tab_layout.setContentsMargins(2, 2, 2, 2)
+
+        # Process tab
+        self.process_tab = QWidget()
+        self.process_tab_layout = QVBoxLayout(self.process_tab)
+        self.process_tab_layout.setContentsMargins(2, 2, 2, 2)
+
+        # Moving process video container to second tab
+        self.process_tab_layout.addWidget(self.processed_videos_scroll_area)
+
+        # Add tabs to tab widget
+        self.tab_widget.addTab(self.video_tab, "Videos")
+        self.tab_widget.addTab(self.process_tab, "Processes")
+        
+        # Add tab widget to center layout
+        self.center_layout.addWidget(self.tab_widget)
 
         # Right layout for video info
         self.right_widget = QWidget()
@@ -333,18 +375,31 @@ class VideoSizeReducer(QMainWindow):
 
         self.setCentralWidget(self.main_layout)
 
-        if is_dark_theme():
-            self.apply_video_decrease_size_dark_theme()
-        else:
-            self.apply_video_decrease_size_light_theme()
-
+        self.apply_video_decrease_size_dark_theme()
+        
         self.video_files = []
+
+    def exit_video_size_reducer(self):
+        self.close()
 
     def confirm_reduce(self):
         output_path = QFileDialog.getExistingDirectory(None, "Select folder to save", settings.location)
+        if not output_path:
+            return
+
         self.output_path = output_path
         self.current_video_index = 0
         self.cancel_requested = False
+        self.progress_bar.setValue(0)
+        self.start_processing_next_video()
+
+        # Clear the process items dictionary
+        self.process_items.clear()
+
+        for video in self.video_files:
+            output_file = os.path.join(self.output_path, os.path.basename(video))
+            self.add_process_item(video, output_file)
+
         self.start_processing_next_video()
 
     def start_processing_next_video(self):
@@ -358,7 +413,9 @@ class VideoSizeReducer(QMainWindow):
             self.total_frames[video] = self.get_total_frames(video)
             self.video_durations[video] = duration
             output_file = os.path.join(self.output_path, os.path.basename(video))
-            
+
+            # self.add_process_item(video, output_file)
+
             if os.path.exists(output_file):
                 reply = QMessageBox.question(
                     None,
@@ -379,6 +436,69 @@ class VideoSizeReducer(QMainWindow):
             print(f"Skipping video {video} due to invalid duration")
             self.current_video_index += 1
             self.start_processing_next_video()
+
+    def add_process_item(self, video_path, output_path):
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+
+        preview = self.extract_frame(video_path)
+        label = QLabel()
+        if preview:
+            pixmap = QPixmap(preview)
+            label.setPixmap(pixmap)
+        row_layout.addWidget(label)
+
+        info_container = QWidget()
+        info_layout = QVBoxLayout(info_container)
+
+        name_label = QLabel(os.path.basename(video_path))
+        name_label.setWordWrap(True)
+        name_label.setFixedWidth(300)
+
+        # Progressbar and progress label container
+        progress_container = QWidget()
+        progress_layout = QHBoxLayout(progress_container)
+        progress_layout.setSpacing(5)
+
+        # Video item progressbar
+        progressbar = QProgressBar()
+        progressbar.setFixedWidth(150)
+        progressbar.setFixedHeight(10)
+        progressbar.setValue(0)
+        progressbar.setTextVisible(False)
+        progressbar.setStyleSheet("background-color: #262626")
+
+        # Progress label
+        percentage_label = QLabel("0%")
+
+        progress_layout.addWidget(progressbar)
+        progress_layout.addWidget(percentage_label)
+
+        info_layout.addWidget(name_label)
+        info_layout.addWidget(progress_container)
+
+        open_folder_button = QPushButton()
+        open_folder_button.setFixedSize(30, 30)
+        open_folder_button.setEnabled(False)
+        open_folder_button.clicked.connect(lambda: self.open_output_folder(output_path))
+
+        self.process_items[video_path] = { "progressbar": progressbar, "button": open_folder_button, "percentage_label": percentage_label }
+
+        row_widget.setStyleSheet("background-color: #202020")
+        open_folder_button.setStyleSheet(button_dark_style)
+        open_folder_button.setIcon(QIcon(f"{PATH_TO_FILE}folder-simple-fill-dark.svg"))
+
+        row_layout.addWidget(info_container)
+        row_layout.addStretch()
+        row_layout.addWidget(open_folder_button)
+
+        self.processed_videos_container_layout.addWidget(row_widget)
+        self.processed_videos_container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+    def open_output_folder(self, file_path):
+        folder_path = os.path.dirname(file_path)
+        if os.path.exists(folder_path):
+            os.startfile(folder_path) if os.name == "nt" else subprocess.run(["xdg-open", folder_path])
 
     def process_video(self, video, output_path):
         command = [
@@ -421,18 +541,64 @@ class VideoSizeReducer(QMainWindow):
 
             try:
                 seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + float(time_parts[2])
-                if self.video_durations[video] > 0:
-                    progress = (seconds / self.video_durations[video]) * 100
-                    self.progress_bar.setValue(int(progress))
+
+                # Only process if time has increased
+                if video not in self.last_time or seconds > self.last_time[video]:
+                    self.last_time[video] = seconds
+
+                    if self.video_durations[video] > 0:
+                        # Calculate video progress (0-100)
+                        video_progress = min(100, (seconds / self.video_durations[video]) * 100)
+                        progress_int = int(video_progress)
+
+                        if video in self.process_items:
+                            current_progress = self.process_items[video]['progressbar'].value()
+                            if progress_int > current_progress:  # Only update if progress increases
+                                self.process_items[video]['progressbar'].setValue(progress_int)
+                                self.process_items[video]['percentage_label'].setText(f"{progress_int}%")
+
+                        # Calculate total progress (0-100)
+                        percent_per_video = 100.0 / len(self.video_files)
+                        total_progress = self.current_video_index * percent_per_video
+                        total_progress += (video_progress * percent_per_video) / 100.0
+
+                        total_progress_int = int(min(100, total_progress))
+
+                        # Update total progress display
+                        if total_progress_int > self.progress_bar.value():
+                            self.progress_bar.setValue(total_progress_int)
+
+                            # Debug print
+                            print(f"Video: {os.path.basename(video)}")
+                            print(f"Time: {time_str} ({seconds:.2f}s)")
+                            print(f"Video Progress: {progress_int}%")
+                            print(f"Total Progress: {total_progress_int}%")
+                            print("---------------------------")
+
             except ValueError as e:
                 print(f"Error in parsing time: {e}")
 
     def on_process_finished(self, exit_code, exit_status, video, process):
-        self.progress_bar.setValue(100)
+        # Clear the last time for the finished video
+        if video in self.last_time:
+            del self.last_time[video]
+
         process.terminate()
         process.waitForFinished()
-        self.progress_bar.reset()
+
+        if exit_code == 0 and video in self.process_items:
+            self.process_items[video]["progressbar"].setValue(100)
+            self.process_items[video]["percentage_label"].setText("100%")
+            self.process_items[video]["button"].setEnabled(True)
+
         self.current_video_index += 1
+
+        if self.current_video_index < len(self.video_files):
+            total_progress = (self.current_video_index * 100) / len(self.video_files)
+            self.progress_bar.setValue(int(total_progress))
+        else:
+            self.progress_bar.setValue(100)
+
         self.finished_videos.setText(f"Done: {self.current_video_index}/{len(self.video_files)}")
         self.start_processing_next_video()
 
@@ -486,7 +652,11 @@ class VideoSizeReducer(QMainWindow):
             if process.state() == QProcess.ProcessState.Running:
                 process.terminate()
                 process.waitForFinished()
-        self.progress_bar.reset()
+
+        self.progress_bar.setValue(0)
+        for item in self.process_items.values():
+            item["progressbar"].setValue(0)
+            item["percentage_label"].setText("0%")
         self.processes.clear()
 
     def set_video_bitrate_min_max(self):
@@ -606,7 +776,7 @@ class VideoSizeReducer(QMainWindow):
             self.selected_videos.setText(f"Selected videos:  {(len(self.video_files))}")
             self.finished_videos.setText(f"Done: {self.current_video_index}/{len(self.video_files)}")
 
-            self.remove_video_button.setEnabled(True)
+            self.cancel_button.setEnabled(True)
             self.add_video_button.setEnabled(True)
             self.confirm_reduce_button.setEnabled(True)
 
@@ -654,12 +824,7 @@ class VideoSizeReducer(QMainWindow):
         for file in self.video_files:
             row_widget = QWidget()
             row_layout = QHBoxLayout()
-
-            if is_dark_theme():
-                row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
-            else:
-                row_widget.setStyleSheet("background-color: #d4d4d4; border-radius: 4px")
-
+            row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
             row_widget.setLayout(row_layout)
 
             preview = self.extract_frame(file)
@@ -673,15 +838,55 @@ class VideoSizeReducer(QMainWindow):
             name_label.setWordWrap(True)
             name_label.setFixedWidth(300)
 
-            if is_dark_theme():
-                name_label.setStyleSheet("color: #a3a3a3")
-            else:
-                name_label.setStyleSheet("color: #000000")
+            remove_button = QPushButton()
+            remove_button.setFixedSize(30, 30)
+
+            remove_button.clicked.connect(lambda _, f=file: self.remove_video(f))
+
+            name_label.setStyleSheet("color: #a3a3a3")
+            remove_button.setStyleSheet(remove_button_dark_style)
+            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
 
             row_layout.addWidget(name_label)
+            row_layout.addWidget(remove_button)
 
             layout.addWidget(row_widget)
             layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+    def remove_video(self, file):
+        self.video_files.remove(file)
+        self.display_selected_vidoes(self.video_layout)
+
+        # Update the counters and info
+        if self.video_files:
+            total_size, final_unit = self.calculate_videos_size()
+            self.total_size.setText(f"Total size: {str(total_size)} {str(final_unit)}")
+            self.selected_videos.setText(f"Selected videos: {len(self.video_files)}")
+            self.finished_videos.setText(f"Done: {self.current_video_index}/{len(self.video_files)}")
+
+            # Update video info with first remaining video
+            video_info, audio_info = self.get_video_info(self.video_files[0])
+            self.video_name_text.setText(os.path.basename(self.video_files[0]))
+            self.video_info_label.setText(f"Video Info: \n\n{video_info}")
+            self.audio_info_label.setText(f"Audio Info: \n\n{audio_info}")
+        else:
+            # Reset everything if no video remained
+            self.total_size.setText("Total Size: ")
+            self.selected_videos.setText("Selected videos: ")
+            self.finished_videos.setText("Done: 0/0")
+            self.video_name_text.setText("")
+            self.video_info_label.setText("Video Info: ")
+            self.audio_info_label.setText("Audio Info: ")
+
+            # Diable controls
+            self.resolution_combo.setEnabled(False)
+            self.video_bitrate_field.setEnabled(False)
+            self.audio_bitrate_field.setEnabled(False)
+            self.video_codec_combo.setEnabled(False)
+            self.audio_codec_combo.setEnabled(False)
+            self.confirm_reduce_button.setEnabled(False)
+            self.cancel_button.setEnabled(False)
+            self.add_video_button.setEnabled(False)
 
     def extract_frame(self, file_path):
         try:
@@ -858,26 +1063,16 @@ class VideoSizeReducer(QMainWindow):
         self.audio_bitrate_info_message_box.setText(AUDIO_BITRATE_GUIDE)
         self.audio_bitrate_info_message_box.exec()
 
-    def set_styles(self):
-        if is_dark_theme():
-            self.setStyleSheet("QWidget#VideoSizeReducer { background-color: #262626 } ")
-        else:
-            self.setStyleSheet("QWidget#VideoSizeReducer { background-color: #f5f5f5 }")
-
     def apply_icon_style(self):
-        if is_dark_theme():
-            self.increase_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
-            self.decrease_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
-            self.increase_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
-            self.decrease_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
-        else:
-            self.increase_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-light.svg"))
-            self.decrease_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-light.svg"))
-            self.increase_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-light.svg"))
-            self.decrease_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-light.svg"))
+        self.increase_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
+        self.decrease_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
+        self.increase_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
+        self.decrease_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
 
     def apply_video_decrease_size_dark_theme(self):
+        self.setStyleSheet("QWidget#VideoSizeReducer { background-color: #262626 } ")
         self.video_container.setStyleSheet("background-color: #171717")
+        self.processed_videos_container.setStyleSheet("background-color: #171717")
         self.left_widget.setStyleSheet("background-color: #171717")
         self.center_bottom_widget.setStyleSheet("background-color: #171717")
         self.right_widget.setStyleSheet("background-color: #171717")
@@ -886,8 +1081,8 @@ class VideoSizeReducer(QMainWindow):
         self.select_videos_button.setStyleSheet(button_dark_style)
         self.add_video_button.setStyleSheet(button_dark_style)
         self.confirm_reduce_button.setStyleSheet(button_dark_style)
+        self.cancel_button.setStyleSheet(button_dark_style)
         self.exit_button.setStyleSheet(button_dark_style)
-        self.remove_video_button.setStyleSheet(button_dark_style)
 
         self.resolution_info_button.setStyleSheet(button_dark_style)
         self.video_bitrate_info_button.setStyleSheet(button_dark_style)
@@ -899,45 +1094,6 @@ class VideoSizeReducer(QMainWindow):
         self.video_info.setStyleSheet("background-color: #262626")
         self.audio_info.setStyleSheet("background-color: #262626")
 
-    def apply_video_decrease_size_light_theme(self):
-        self.video_container.setStyleSheet("background-color: #eeeeee")
-        self.left_widget.setStyleSheet("background-color: #d4d4d4")
-        self.center_bottom_widget.setStyleSheet("background-color: #d4d4d4")
-        self.right_widget.setStyleSheet("background-color: #d4d4d4")
-        self.progress_bar.setStyleSheet("background-color: #dddddd")
-        
-        self.general_info.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.buttons_widget.setStyleSheet("background-color: #dddddd")
-
-        self.select_videos_button.setStyleSheet(button_light_style)
-        self.add_video_button.setStyleSheet(button_light_style)
-        self.confirm_reduce_button.setStyleSheet(button_light_style)
-        self.exit_button.setStyleSheet(button_light_style)
-        self.remove_video_button.setStyleSheet(button_light_style)
-
-        self.resolution.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.video_codec.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.video_bitrate.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.audio_codec.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.audio_bitrate.setStyleSheet("background-color: #f5f5f5; color: #000")
-
-        self.increase_video_bitrate_button.setStyleSheet("background-color: #d4d4d4")
-        self.decrease_video_bitrate_button.setStyleSheet("background-color: #d4d4d4")
-        self.increase_audio_bitrate_button.setStyleSheet("background-color: #d4d4d4")
-        self.decrease_audio_bitrate_button.setStyleSheet("background-color: #d4d4d4")
-
-        self.video_bitrate_field.setStyleSheet("background-color: #dddddd")
-        self.audio_bitrate_field.setStyleSheet("background-color: #dddddd")
-
-        self.resolution_info_button.setStyleSheet(button_light_style)
-        self.video_bitrate_info_button.setStyleSheet(button_light_style)
-        self.video_codec_info_button.setStyleSheet(button_light_style)
-        self.audio_bitrate_info_button.setStyleSheet(button_light_style)
-        self.audio_codec_info_button.setStyleSheet(button_light_style)
-
-        self.video_name.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.video_info.setStyleSheet("background-color: #f5f5f5; color: #000")
-        self.audio_info.setStyleSheet("background-color: #f5f5f5; color: #000")
 
 # Reduce the size by:
 # 1 - CRF Adjustment - from 0 to 50

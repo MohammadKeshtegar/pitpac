@@ -1,32 +1,28 @@
 from PyQt5.QtWidgets import  QPushButton
 from PyQt5.QtGui import QIcon
 
-from utils.assets import is_dark_theme, PATH_TO_FILE
-from utils.styles import button_dark_style, button_light_style
+from utils.styles import button_dark_style
+from utils.assets import  PATH_TO_FILE
 
 class BackButton(QPushButton):
     def __init__(self, mainWindowObject, text=None):
         super().__init__()
         self.mainWindowObject = mainWindowObject
 
+        self.current_widget = None
+        self.prev_widget = None
+
         self.setText(text)
         self.redirect_button_style()
         self.setFixedSize(50, 25)
-        self.clicked.connect(self.handle_redirect_button)
+        self.clicked.connect(self.handle_back)
 
-    def handle_redirect_button(self):
+    def handle_back(self):
         self.mainWindowObject.show_main_page()
 
     def redirect_button_style(self):
-        if is_dark_theme():
-            self.redirect_button_dark_style()
-        else:
-             self.redirect_button_light_style()
+        self.redirect_button_dark_style()
 
     def redirect_button_dark_style(self):
             self.setStyleSheet(button_dark_style)
             self.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-dark.svg'))
-    
-    def redirect_button_light_style(self):
-            self.setStyleSheet(button_light_style)
-            self.setIcon(QIcon(f'{PATH_TO_FILE}arrow-left-light.svg'))

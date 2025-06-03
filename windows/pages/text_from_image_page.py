@@ -3,10 +3,10 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PIL import Image
 
-from utils.backButton import BackButton
+from components.BackButton import BackButton
 
-from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, combobox_dark_style ,combobox_light_style
-from utils.assets import is_dark_theme, settings
+from utils.styles import button_dark_style, combobox_dark_style
+from utils.assets import settings
 from utils.notification import notification
 
 import pytesseract
@@ -59,8 +59,8 @@ class TextFromImagePage(QMainWindow):
         self.text_container_layout.addWidget(self.text_scroll_area)
 
         self.buttons_widget = QWidget()
-        buttons_layout = QHBoxLayout()
-        self.buttons_widget.setLayout(buttons_layout)
+        self.buttons_layout = QHBoxLayout()
+        self.buttons_widget.setLayout(self.buttons_layout)
 
         self.select_image_to_extract_button = QPushButton("Select image", self)
         self.select_image_to_extract_button.clicked.connect(self.selectImage)
@@ -77,19 +77,16 @@ class TextFromImagePage(QMainWindow):
         self.save_text_button.setEnabled(False)
         self.save_text_button.clicked.connect(self.save_text_into_file)
 
-        buttons_layout.addWidget(self.select_image_to_extract_button, alignment=Qt.AlignmentFlag.AlignLeft)
-        buttons_layout.addWidget(self.select_language_menu, alignment=Qt.AlignmentFlag.AlignLeft)
-        buttons_layout.addStretch(1)
-        buttons_layout.addWidget(self.save_text_button, alignment=Qt.AlignmentFlag.AlignRight)
+        self.buttons_layout.addWidget(self.select_image_to_extract_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.buttons_layout.addWidget(self.select_language_menu, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.buttons_layout.addStretch(1)
+        self.buttons_layout.addWidget(self.save_text_button, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout.addWidget(self.back_button)
         layout.addWidget(self.text_container)
         layout.addWidget(self.buttons_widget)
 
-        if is_dark_theme():
-            self.apply_text_from_image_dark_style()
-        else:
-            self.apply_text_from_image_light_style()
+        self.apply_text_from_image_dark_style()
 
     def selectImage(self):
         options = QFileDialog.Options()
@@ -123,19 +120,10 @@ class TextFromImagePage(QMainWindow):
 
     # Text from image
     def apply_text_from_image_dark_style(self):
-        self.text_scroll_area.setStyleSheet(scroll_area_dark_style)
-        self.central_widget.setStyleSheet("background-color: #262626")
+        self.central_widget.setStyleSheet("background-color: #262626 ")
+        self.buttons_widget.setStyleSheet("background-color: #262626")
         self.textEdit.setStyleSheet("background-color: #333333")
         self.select_image_to_extract_button.setStyleSheet(button_dark_style)
         self.copy_button.setStyleSheet(button_dark_style)
         self.save_text_button.setStyleSheet(button_dark_style)
         self.select_language_menu.setStyleSheet(combobox_dark_style)
-
-    def apply_text_from_image_light_style(self):
-        self.text_scroll_area.setStyleSheet(scroll_area_light_style)
-        self.central_widget.setStyleSheet("background-color: #e5e5e5")
-        self.textEdit.setStyleSheet("background-color: #a5a5a5")
-        self.select_image_to_extract_button.setStyleSheet(button_light_style)
-        self.copy_button.setStyleSheet(button_light_style)
-        self.save_text_button.setStyleSheet(button_light_style)
-        self.select_language_menu.setStyleSheet(combobox_light_style)

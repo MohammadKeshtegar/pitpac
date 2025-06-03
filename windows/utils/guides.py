@@ -1,20 +1,32 @@
 VIDEO_CODEC_GUIDE = """
 Codec for videos:
+
 1 - libx264 (H.264): One of the most popular video codecs, widely used for its balance of quality and compression.
+
 2 - libx265 (H.265/HEVC): Successor to H.264, offering better compression and quality at the cost of increased computational power.
+
 3 - libvpx (VP8/VP9): Developed by Google, commonly used for web video (e.g., YouTube).
+
 4 - libaom (AV1): An open and royalty-free codec developed by the Alliance for Open Media, offering even better compression than VP9 and H.265.
+
 5 - mpeg2video (MPEG-2): An older codec still used in DVDs and some broadcast TV.
+
 6 - prores (ProRes): A high-quality codec developed by Apple, often used in professional video editing.
 """
 
 AUDIO_CODEC_GUIDE = """
 Codec for audios:
+
 1 - acc AAC (Advanced Audio Codec): Widely used in streaming and storage, known for its high quality and efficiency.
+
 2 - libmp3lame MP3: One of the most popular audio codecs, known for its compatibility and moderate quality.
+
 3 - libopus Opus: An open and versatile codec suitable for both voice and music, known for its low latency.
+
 4 - flac FLAC (Free Lossless Audio Codec): Provides lossless compression, preserving audio quality.
+
 5 - libvorbis Vorbis: An open-source codec, often used in Ogg containers, known for good quality and efficiency.
+
 6 - ac3 AC3 (Dolby Digital): Commonly used in DVDs and Blu-rays, providing surround sound.
 """
 

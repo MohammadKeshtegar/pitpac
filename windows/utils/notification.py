@@ -1,5 +1,4 @@
 from pyqttoast import Toast, ToastPreset, ToastPosition
-from utils.assets import is_dark_theme
 
 def notification(parent, message, message_type = "SUCCESS"):
     Toast.setPosition(ToastPosition.TOP_MIDDLE)
@@ -13,13 +12,7 @@ def notification(parent, message, message_type = "SUCCESS"):
     toast.setShowCloseButton(False)
     toast.setResetDurationOnHover(False)
     if message_type == "SUCCESS":
-        if is_dark_theme():
-            toast.applyPreset(ToastPreset.SUCCESS_DARK)
-        else:
-            toast.applyPreset(ToastPreset.SUCCESS)
-    else:
-        if is_dark_theme():
-            toast.applyPreset(ToastPreset.ERROR_DARK)
-        else:
-            toast.applyPreset(ToastPreset.ERROR)
+        toast.applyPreset(ToastPreset.SUCCESS_DARK)
+    elif message_type == "ERROR":
+        toast.applyPreset(ToastPreset.ERROR_DARK)
     toast.show()

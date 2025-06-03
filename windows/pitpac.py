@@ -2,8 +2,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QSt
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt
 
-from utils.styles import button_size, button_dark_style, button_light_style
-from utils.assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.styles import button_size, button_dark_style
+from utils.assets import PATH_TO_FILE, settings
 
 from pages.text_from_image_page import TextFromImagePage
 from pages.image_resizer_page import ImageResizerPage
@@ -26,10 +26,7 @@ class Pitpac(QMainWindow):
 
         self.initUI()
 
-        if is_dark_theme():
-            self.apply_main_dark_style()
-        else:
-            self.apply_main_light_style()
+        self.apply_main_dark_style()
 
         self.about_window = None
         self.settings_window = None
@@ -93,15 +90,12 @@ class Pitpac(QMainWindow):
         self.video_size_reducer_button.clicked.connect(self.show_video_decrease_size_page)
         self.settings_button.clicked.connect(self.show_settings_window)
         self.about_button.clicked.connect(self.show_about_window)
-        self.close_app_button.clicked.connect(self.close_app)
+        self.close_app_button.clicked.connect(self.closeEvent)
 
         button_container = QWidget()
         button_layout = QVBoxLayout(button_container)
 
-        if is_dark_theme():
-            self.apply_main_dark_style()
-        else:
-            self.apply_main_light_style()
+        self.apply_main_dark_style()
 
         # Configuring buttons
         button_layout.addWidget(self.image2pdf_button, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -138,7 +132,8 @@ class Pitpac(QMainWindow):
         self.video_size_reducer_window = VideoSizeReducer()
         self.video_size_reducer_window.show()
 
-    def close_app(self):
+    # The name of this function is a little different from other, be cause it's the main window close event.
+    def closeEvent(self, event):
         if self.settings_window:
             self.settings_window.close()
         if self.about_window:
@@ -171,17 +166,6 @@ class Pitpac(QMainWindow):
         self.settings_button.setStyleSheet(button_dark_style)
         self.about_button.setStyleSheet(button_dark_style)
         self.close_app_button.setStyleSheet(button_dark_style)
-
-    def apply_main_light_style(self):
-        self.main_page.setStyleSheet("background: #f5f5f5; color: #000000")
-        self.image2pdf_button.setStyleSheet(button_light_style)
-        self.image_resizer_button.setStyleSheet(button_light_style)
-        self.pdf_combiner_button.setStyleSheet(button_light_style)
-        self.text_from_image_button.setStyleSheet(button_light_style)
-        self.video_size_reducer_button.setStyleSheet(button_light_style)
-        self.settings_button.setStyleSheet(button_light_style)
-        self.about_button.setStyleSheet(button_light_style)
-        self.close_app_button.setStyleSheet(button_light_style)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

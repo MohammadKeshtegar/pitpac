@@ -4,11 +4,10 @@ from PyQt5.QtCore import Qt
 from PIL import Image
 
 from image_preview import ImageDisplayWindow
-from utils.backButton import BackButton
+from components.BackButton import BackButton
 
-
-from utils.styles import button_dark_style, button_light_style, scroll_area_dark_style, scroll_area_light_style, remove_button_dark_style, remove_button_light_style
-from utils.assets import is_dark_theme, PATH_TO_FILE, settings
+from utils.styles import button_dark_style, scroll_area_dark_style, remove_button_dark_style
+from utils.assets import PATH_TO_FILE, settings
 from utils.notification import notification
 
 import io
@@ -63,7 +62,7 @@ class ImageResizerPage(QMainWindow):
         # Width input
         self.width_input = QLineEdit(self)
         self.width_input.setPlaceholderText("width")
-        self.width_input.setMaximumWidth(200)
+        self.width_input.setMaximumWidth(300)
         self.width_input.setFont(QFont("Arial", 14))
         self.width_input.setValidator(QIntValidator())
         self.width_input.setEnabled(False)
@@ -72,7 +71,7 @@ class ImageResizerPage(QMainWindow):
         # Height input
         self.height_input = QLineEdit(self)
         self.height_input.setPlaceholderText("height")
-        self.height_input.setMaximumWidth(200)
+        self.height_input.setMaximumWidth(300)
         self.height_input.setFont(QFont("Arial", 14))
         self.height_input.setValidator(QIntValidator())
         self.height_input.setEnabled(False)
@@ -110,11 +109,8 @@ class ImageResizerPage(QMainWindow):
         layout.addWidget(self.images_scroll_area)
         layout.addLayout(width_height_buttons_layout)
 
-        if is_dark_theme():
-            self.apply_image_resizer_page_dark_style()
-        else:
-            self.apply_image_resizer_page_light_style()
-
+        self.apply_image_resizer_page_dark_style()
+        
     def display_selected_images(self, layout):
         for i in reversed(range(layout.count())): 
             widget_to_remove = layout.itemAt(i).widget()
@@ -125,26 +121,16 @@ class ImageResizerPage(QMainWindow):
             row_widget = QWidget()
             row_layout = QHBoxLayout()
 
-            if settings.mode  == "dark":
-                row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
-            else:
-                row_widget.setStyleSheet("background-color: #f5f5f5; border-radius: 4px")
-            
+            row_widget.setStyleSheet("background-color: #262626; border-radius: 4px")
             row_widget.setLayout(row_layout)
             row_widget.setFixedHeight(120)
+            row_widget.setCursor(Qt.CursorShape.PointingHandCursor)
+            row_widget.mousePressEvent = lambda event, f=file: self.update_preview(f)
 
             remove_button = QPushButton()
-            if is_dark_theme():
-                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
-            else:
-                remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-light.svg"))
-
+            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             remove_button.setFixedSize(30, 30)
-            if is_dark_theme():
-                remove_button.setStyleSheet(remove_button_dark_style)
-            else:
-                remove_button.setStyleSheet(remove_button_light_style)
-
+            remove_button.setStyleSheet(remove_button_dark_style)            
             remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))
             row_layout.addWidget(remove_button)
 
@@ -156,15 +142,27 @@ class ImageResizerPage(QMainWindow):
             name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
             name_label.setFixedWidth(380)
-            if is_dark_theme():
-                name_label.setStyleSheet("color: #a3a3a3")
-            else:
-                name_label.setStyleSheet("color: #000000")
-            
+            name_label.setStyleSheet("color: #a3a3a3")
+
             row_layout.addWidget(name_label)
 
             layout.addWidget(row_widget)
             layout.setAlignment(Qt.AlignTop)
+
+        if self.image_files:
+            self.update_preview(self.image_files[0])
+
+    def update_preview(self, file):
+        pixmap = QPixmap(file)
+        self.image_display_window.display_image(pixmap)
+        self.image_display_window.show()
+
+        for index, f in enumerate(self.image_files):
+            row_widget = self.resized_images_layout.itemAt(index).widget()
+            if f == file:
+                row_widget.setStyleSheet("background-color: #202020; border-radius: 4px;")
+            else:
+                row_widget.setStyleSheet("background-color: #262626; border-radius: 4px;")
 
     def remove_image(self, layout, file):
         self.image_files.remove(file)
@@ -187,10 +185,13 @@ class ImageResizerPage(QMainWindow):
 
     def remove_all_images(self):
         self.image_files = []
+        self.width_input.setText("")
+        self.height_input.setText("")
         self.display_selected_images(self.resized_images_layout)
-        self.button_img_to_pdf_save.setEnabled(False)
-        self.button_img_to_pdf_remove_all.setEnabled(False)
-        self.button_img_to_pdf_add.setEnabled(False)
+        self.save_resized_image_button.setEnabled(False)
+        self.remove_all_images_button.setEnabled(False)
+        self.add_image_button.setEnabled(False)
+        self.image_display_window.close()
 
     def selectImage(self): 
         options = QFileDialog.Options() 
@@ -199,21 +200,19 @@ class ImageResizerPage(QMainWindow):
             self.images_scroll_area.setVisible(True) 
             self.image_files = filenames 
             self.display_selected_images(self.resized_images_layout) 
-            
             self.images = self.images_ref = [Image.open(image_filename) for image_filename in filenames] 
-            self.original_aspect_ratio = self.images[0].width / self.images[0].height 
-            self.width_input.setText(str(self.images[0].width)) 
-            self.height_input.setText(str(self.images[0].height)) 
+
+            self.original_aspect_ratio = self.images[0].width / self.images[0].height
+            self.width_input.setText(str(self.images[0].width))
+            self.height_input.setText(str(self.images[0].height))
             
-            self.width_input.setEnabled(True) 
-            self.height_input.setEnabled(True) 
+            self.width_input.setEnabled(True)
+            self.height_input.setEnabled(True)
             self.remove_all_images_button.setEnabled(True) 
             self.add_image_button.setEnabled(True) 
             self.save_resized_image_button.setEnabled(True)  
             
-            pixmap = QPixmap(filenames[0]) 
-            
-            self.image_display_window.display_image(pixmap)
+            self.update_preview(filenames[0])
 
     def updateImage(self, width=None, height=None):
         if self.images:
@@ -221,17 +220,17 @@ class ImageResizerPage(QMainWindow):
             width_input_text = self.width_input.text()
             height_input_text = self.height_input.text()
 
-            new_width = width or (int(width_input_text) if width_input_text else first_image.width)
+            new_width =  width if (width != '') else (int(width_input_text) if width_input_text else first_image.width)
             new_height = height or (int(height_input_text) if height_input_text else first_image.height)
             keep_aspect_ratio = self.aspect_ratio_check.isChecked()
 
             if keep_aspect_ratio:
-                if new_width / self.original_aspect_ratio > new_height:
+                if self.original_aspect_ratio < 1:
                     new_width = int(new_height * self.original_aspect_ratio)
                 else:
                     new_height = int(new_width / self.original_aspect_ratio)
 
-            if new_width <= 1 or new_height <= 1:
+            if new_width and new_height and  (new_width <= 1 or new_height <= 1): # Just pass, because it stuck when there is no value in the input
                 pass
             else:
                 new_size = (int(new_width), int(new_height))
@@ -258,12 +257,7 @@ class ImageResizerPage(QMainWindow):
             self.image = self.images_ref
             if self.aspect_ratio_check.isChecked() and self.image:
                 self.height_input.blockSignals(True)
-
-                if self.images[0].width > self.images[0].height:
-                    self.height_input.setText(str(round(int(text) / self.original_aspect_ratio)))
-                else:
-                    self.height_input.setText(str(round(int(text) * self.original_aspect_ratio)))
-
+                self.height_input.setText(str(round(int(text) / self.original_aspect_ratio)))
                 self.height_input.blockSignals(False)
             self.updateImage(width=int(text))
 
@@ -275,12 +269,7 @@ class ImageResizerPage(QMainWindow):
             self.image = self.images_ref
             if self.aspect_ratio_check.isChecked() and self.image:
                 self.width_input.blockSignals(True)
-
-                if self.images[0].width > self.images[0].height:
-                    self.width_input.setText(str(round(int(text) * self.original_aspect_ratio)))
-                else:
-                    self.width_input.setText(str(round(int(text) / self.original_aspect_ratio)))
-                
+                self.width_input.setText(str(round(int(text) * self.original_aspect_ratio)))
                 self.width_input.blockSignals(False)
             self.updateImage(height=int(text))
 
@@ -319,14 +308,3 @@ class ImageResizerPage(QMainWindow):
         self.select_image_button.setStyleSheet(button_dark_style)
         self.remove_all_images_button.setStyleSheet(button_dark_style)
         self.add_image_button.setStyleSheet(button_dark_style)
-
-    def apply_image_resizer_page_light_style(self):
-        self.images_scroll_area.setStyleSheet(scroll_area_light_style)
-        self.central_widget.setStyleSheet("background-color: #e5e5e5")
-        self.images_widget.setStyleSheet("background-color: #a5a5a5")
-        self.width_input.setStyleSheet("background-color: #a5a5a5")
-        self.height_input.setStyleSheet("background-color: #a5a5a5")
-        self.save_resized_image_button.setStyleSheet(button_light_style)
-        self.select_image_button.setStyleSheet(button_light_style)
-        self.remove_all_images_button.setStyleSheet(button_light_style)
-        self.add_image_button.setStyleSheet(button_light_style)
