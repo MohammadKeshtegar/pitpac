@@ -128,6 +128,7 @@ class SettingsWindow(QWidget):
 
     def toggle_show_image_preview(self, state):
         settings.show_image_preview = True if state == 2 else False
+        print(settings.show_image_preview)
         save_theme_preference()
 
     def set_font_family(self, font):

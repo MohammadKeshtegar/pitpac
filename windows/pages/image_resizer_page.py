@@ -17,7 +17,9 @@ class ImageResizerPage(QMainWindow):
     def __init__(self, mainWindowObject):
         super().__init__()
         self.mainWindowObject = mainWindowObject
-        self.image_display_window = ImageDisplayWindow()
+        print(settings.show_image_preview)
+        if settings.show_image_preview:
+            self.image_display_window = ImageDisplayWindow()
         self.setup_image_resizer_page()
 
     def setup_image_resizer_page(self):
@@ -82,7 +84,7 @@ class ImageResizerPage(QMainWindow):
         self.aspect_ratio_check.setChecked(True)
 
         # Convert to icon
-        self.convert_to_icon_check = QCheckBox("Convert to Icon", self)
+        self.convert_to_icon_check = QCheckBox("Convert to icon file", self)
         self.convert_to_icon_check.setChecked(False)
 
         # Layout for width and height inputs
@@ -153,6 +155,10 @@ class ImageResizerPage(QMainWindow):
             self.update_preview(self.image_files[0])
 
     def update_preview(self, file):
+        print(settings.show_image_preview)
+        if not settings.show_image_preview:
+            return
+
         pixmap = QPixmap(file)
         self.image_display_window.display_image(pixmap)
         self.image_display_window.show()
@@ -175,6 +181,9 @@ class ImageResizerPage(QMainWindow):
             self.save_resized_image_button.setEnabled(False)
             self.width_input.setEnabled(False)
             self.height_input.setEnabled(False)
+            
+            if settings.show_image_preview:
+                self.image_display_window.close()
     
     def add_image(self):
         options = QFileDialog.Options()
@@ -211,7 +220,7 @@ class ImageResizerPage(QMainWindow):
             self.remove_all_images_button.setEnabled(True) 
             self.add_image_button.setEnabled(True) 
             self.save_resized_image_button.setEnabled(True)  
-            
+
             self.update_preview(filenames[0])
 
     def updateImage(self, width=None, height=None):
