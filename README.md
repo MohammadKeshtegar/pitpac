@@ -1,24 +1,37 @@
 # pitpac
 
-## Description
+## Overview
 
-Pitpac is a python base application built with qt. i built this app for my personal usecases like creating pdf from some image or combining some pdf with each other.
+Pitpac is a python-based application built with Qt. i built this app for my personal use cases such as creating PDFs from images, combining PDFs, resizing images, extracting text from images and reducing video file sizes.
 
-The application has the below features:
+## Features
 
-- Create pdf from some image
-- Combine some pdf into one pdf
-- Resing images
-- Extracting text from images
-- Reducing the video size
+- **Create PDFs**: Generate PDFs from images.
+- **Combine PDFs**: Merge multiple PDFs into a single file.
+- **Image Processing**: Resize images or convert them into icon files.
+- **Text Extraction**: Extract text from images using OCR (Optical Character Recognition).
+- **Video Compression**: Reduce the size of video files.
 
-In the settings you can change:
+## Planned Features
 
-1. Show a preview of the resied image
-2. The location that app uses to open a dialog window
-3. The font size and font family
+- Video preview to compare original and compressed videos.
+- Estimated file size calculation for compressed videos.
+
+## Settings
+
+Customize the following options:
+
+- Enable/disable preview for resized images.
+- Set the default directory for file dialogs.
+- Adjust font size and font family.
 
 ## Installation
+
+### Prerequisites
+
+- Python 3.8 or higher.
+- Tesseract OCR (required for text extraction; see Notes below).
+- Supported on Windows, macOS, and Linux.
 
 Just run
 
@@ -26,13 +39,21 @@ Just run
 pip install -r requirements.txt
 ```
 
-And this should install all the nessecary packages for you.
+And this should install all the necessary packages for you.
 
-_Notes_:
+## Notes
 
-1. For extracting text from image, i used pytesseract packges which is an OCR tool for recongnizing and reading text in images. Besides this package you need to install tesseract it self in your machine, so then you can use this package in your app.
+1. ### Text Extraction:
 
-2. If you ran it the via terminal and faced these errors
+   Pitpac uses the pytesseract package for OCR, which requires Tesseract to be installed on your system. Installation instructions:
+
+   - Windows: Download and install from Tesseract at UB Mannheim.
+   - Linux: Run sudo apt-get install tesseract-ocr.
+   - macOS: Run brew install tesseract.
+
+   Note: The OCR feature may not perform as expected in some cases. Future updates will allow integration with external OCR tools.
+
+2. ### Font Errors
 
    ```
    QFont::fromString: Invalid description 'Fira Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
@@ -43,8 +64,11 @@ _Notes_:
 
    That's ok, you can use the app without any issue. That's because in the qt5 app the fonts are not applied correctly, unlike qt6 which this issue is fixed in it.
 
-3. Some videos like with `.mkw` format, the video bitrate and audio bitrate might not be found, so i put an input too enter you own desier bitrate both for video bitrate and audio bitrate.
+3. ## Video Compression
 
-4. The application theme is only dark mode for now. In the future updates i'll add setting for creating you own custom theme.
+   Some videos like with `.mkw` format, the video bitrate and audio bitrate might not be found, so i put an input too enter you own desier bitrate both for video bitrate and audio bitrate.
 
-If you faced any unexpected issue you can contact me in [@MohammadKeshtegar](https://t.me/Mohammadkeshtegar1401).
+4. ## Theme
+   The application theme is only dark mode for now. Custom theme support is planned for future updates.
+
+If you faced any unexpected issue you can contact me via Telegram: [@MohammadKeshtegar](https://t.me/Mohammadkeshtegar1401).

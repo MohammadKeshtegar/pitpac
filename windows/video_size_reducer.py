@@ -10,11 +10,7 @@ from utils.styles import  button_dark_style, remove_button_dark_style
 from utils.assets import settings, PATH_TO_FILE
 
 import subprocess
-import platform
-import hashlib
 import ffmpeg
-import shlex
-import time
 import io
 import os
 
@@ -30,7 +26,6 @@ class VideoSizeReducer(QMainWindow):
         self.last_time = {}
         self.total_frames = {}
         self.process_items = {}
-        self.preview_cache = {}
         self.video_durations = {}
         self.current_video_index = 0
         self.cancel_requested = False
@@ -45,7 +40,7 @@ class VideoSizeReducer(QMainWindow):
         # Left layout for options
         self.left_widget = QWidget()
         self.left_layout = QVBoxLayout(self.left_widget)
-        self.left_widget.setMinimumWidth(260)
+        self.left_widget.setMinimumWidth(300)
 
         # Video resolution
         self.resolution = QWidget()
@@ -206,29 +201,12 @@ class VideoSizeReducer(QMainWindow):
         self.audio_bitrate_layout.addWidget(self.audio_bitrate_label)
         self.audio_bitrate_layout.addWidget(self.audio_bitrate_fields_widget)
 
-        # Output format
-        self.output_format = QWidget()
-        self.output_format_layout = QHBoxLayout(self.output_format)
-        self.output_format_layout.setContentsMargins(5,5,5,5)
-
-        self.output_format_label = QLabel("Output format")
-        self.output_format_combo = QComboBox(self.output_format)
-        self.output_format_combo.addItem("mp4", "mp4")
-        self.output_format_combo.addItem("mkv", "mkv")
-        self.output_format_combo.addItem("avi", "avi")
-        self.output_format_combo.setEnabled(False)
-        self.output_format_combo.setCurrentIndex(0)
-        self.output_format_combo.currentIndexChanged.connect(self.handle_output_format)
-
-        self.output_format_layout.addWidget(self.output_format_label)
-        self.output_format_layout.addWidget(self.output_format_combo)
 
         self.left_layout.addWidget(self.resolution)
         self.left_layout.addWidget(self.video_codec)
         self.left_layout.addWidget(self.video_bitrate)
         self.left_layout.addWidget(self.audio_codec)
         self.left_layout.addWidget(self.audio_bitrate)
-        self.left_layout.addWidget(self.output_format)
 
         # Center layout
         self.center_layout = QSplitter(Qt.Orientation.Vertical)
@@ -258,10 +236,6 @@ class VideoSizeReducer(QMainWindow):
         self.add_video_button = QPushButton("Add Video")
         self.add_video_button.setEnabled(False)
 
-        self.preview_button = QPushButton("Preview")
-        self.preview_button.clicked.connect(self.preview_output)
-        self.preview_button.setEnabled(False)
-
         self.confirm_reduce_button = QPushButton("Reduce")
         self.confirm_reduce_button.clicked.connect(self.confirm_reduce)
         self.confirm_reduce_button.setEnabled(False)
@@ -275,7 +249,6 @@ class VideoSizeReducer(QMainWindow):
 
         self.buttons_layout.addWidget(self.select_videos_button)
         self.buttons_layout.addWidget(self.add_video_button)
-        self.buttons_layout.addWidget(self.preview_button)
         self.buttons_layout.addWidget(self.confirm_reduce_button)
         self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.exit_button)
@@ -356,7 +329,7 @@ class VideoSizeReducer(QMainWindow):
         # Right layout for video info
         self.right_widget = QWidget()
         self.right_layout = QVBoxLayout(self.right_widget)
-        self.right_widget.setMinimumWidth(250)
+        self.right_widget.setMinimumWidth(300)
         self.right_widget.setMaximumWidth(500)
 
         # Video name
@@ -590,6 +563,13 @@ class VideoSizeReducer(QMainWindow):
                         if total_progress_int > self.progress_bar.value():
                             self.progress_bar.setValue(total_progress_int)
 
+                            # Debug print
+                            print(f"Video: {os.path.basename(video)}")
+                            print(f"Time: {time_str} ({seconds:.2f}s)")
+                            print(f"Video Progress: {progress_int}%")
+                            print(f"Total Progress: {total_progress_int}%")
+                            print("---------------------------")
+
             except ValueError as e:
                 print(f"Error in parsing time: {e}")
 
@@ -674,168 +654,6 @@ class VideoSizeReducer(QMainWindow):
             item["percentage_label"].setText("0%")
         self.processes.clear()
 
-    def preview_output(self):
-        if not self.video_files:
-            QMessageBox.warning(self, "No Video", "Please select a video to preview.")
-            return
-
-        if not self.check_ffmpeg():
-            QMessageBox.critical(self, "FFmpeg Error", "FFmpeg is not installed or not found in PATH.")
-            return
-
-        video = self.video_files[0]
-        if not os.path.exists(video):
-            QMessageBox.critical(self, "File Error", f"Video file not found: {os.path.basename(video)}")
-            return
-
-        video = self.video_files[0]
-        settings = (
-            f"{self.resolution_combo.currentData()}:"
-            f"{self.video_codec_combo.currentData()}:"
-            f"{self.audio_codec_combo.currentData()}:"
-            f"{self.video_bitrate_field.text()}:"
-            f"{self.audio_bitrate_field.text()}:"
-            f"{self.output_format_combo.currentData()}:"
-        )
-        settings_hash = hashlib.md5(settings.encode()).hexdigest()
-
-        if video in self.preview_cache:
-            cached = self.preview_cache[video]
-
-            if (cached["settings_hash"] == settings_hash and os.path.exists(cached["file"]) and os.path.getsize(cached["file"]) > 0):
-                try:
-                    if platform.system() == "Windows":
-                        os.startfile(cached["file"])
-                    elif platform.system() == "Linux":
-                        subprocess.run(["xdg-open", cached["file"]])
-                    elif platform.system() == "Darwin":
-                        subprocess.run(["open", cached["file"]])
-                    else:
-                        QMessageBox.warning(self, "Unsupported Platform", "Cannot open video on this platform.")
-                except Exception as e:
-                    print(colored(f"Failed to open cached preview: {e}", "red"))
-
-        timestamp = int(time.time())
-        preview_filename = f"preview_{timestamp}_{os.path.basename(video)}"
-        output_file = os.path.join(os.path.dirname(video), preview_filename)
-        duration = min(self.get_video_duration(video), 10)
-
-        try:
-            output_dir = os.path.dirname(output_file)
-            if not os.access(output_dir, os.W_OK):
-                raise PermissionError(f"No write permission for directory: {output_dir}")
-        except PermissionError as e:
-            QMessageBox.critical(self, "Permission Error", str(e))
-            return
-
-
-        command = [
-            "ffmpeg",
-            "-y",
-            "-analyzeduration", "10M",
-            "-probesize", "10M",
-            "-i", video,
-            "-map", "0:v:0",
-            "-map", "0:a:0",
-            "-vf", f"scale={self.resolution_combo.currentData()}",
-            "-c:v", self.video_codec_combo.currentData(),
-            "-c:a", self.audio_codec_combo.currentData(),
-            "-t", str(duration),
-        ]
-
-        print(command)
-
-        try:
-            video_bitrate = int(self.video_bitrate_field.text()) if self.video_bitrate_field.text() else None
-            if video_bitrate:
-                command.extend(["-b:v", f"{video_bitrate}k"])
-            else:
-                print(colored("No valid video bitrate, using default", "yellow"))
-        except ValueError:
-            print(colored("Invalid video bitrate, using default", "red"))
-            video_bitrate = None
-
-        try:
-            audio_bitrate = int(self.audio_bitrate_field.text()) if self.audio_bitrate_field.text() else None
-            if audio_bitrate:
-                command.extend(["-b:a", f"{audio_bitrate}k"])
-            else:
-                print(colored("No valid audio bitrate, using default", "yellow"))
-        except ValueError:
-            print(colored("Invalid audio bitrate, using default", "red"))
-            audio_bitrate = None
-
-        command.extend(["-f", self.output_format_combo.currentData()])
-        command.append(shlex.quote(output_file))
-
-        process = QProcess(self)
-        self.processes.append(process)
-        process.setProcessChannelMode(QProcess.MergedChannels)
-        process.finished.connect(lambda exit_code, exit_status: self.on_preview_finished(exit_code, exit_status, output_file, video, settings_hash))
-        process.readyReadStandardError.connect(lambda: self.log_ffmpeg_error(process))
-        process.readyReadStandardOutput.connect(lambda: self.log_stdout_output(process))
-        process.start(" ".join(command))
-
-    def on_preview_finished(self, exit_code, exit_status, output_file, video, settings_hash):
-        if exit_code == 0:
-            if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                try:
-                    if platform.system() == "Windows":
-                        os.startfile(output_file)
-                    elif platform.system() == "Linux":
-                        subprocess.run(["xdg-open", output_file])
-                    elif platform.system() == "Darwin":
-                        subprocess.run(["open", output_file])
-                    else:
-                        QMessageBox.warning(self, "Unsupported Platform", "Cannot open video on this platform.")
-
-                    self.preview_cache[video] = {
-                        "file": output_file,
-                        "settings_hash": settings_hash
-                    }
-
-                    time.sleep(2)
-                    if os.path.exists(output_file):
-                        try:
-                            os.remove(output_file)
-                        except Exception as e:
-                            print(colored(f"Failed to delete preview file: {e}", "red"))
-                except Exception as e:
-                    QMessageBox.critical(self, "Preview Error", f"Failed to open preview: {e}")
-            else:
-                QMessageBox.critical(self, "Preview Failed", "Preview file is missing or empty.")
-        else:
-            QMessageBox.critical(self, "Preview Failed", "Failed to generate preview. Check console for FFmpeg errors.")
-
-        process = self.sender()
-        if process in self.processes:
-            self.processes.remove(process)
-            process.deleteLater()
-
-    def log_ffmpeg_error(self, process):
-        error = str(process.readAllStandardError(), "utf-8").strip()
-        if error:
-            print(colored(f"FFmpeg stderr: {error}", "red"))
-
-    def log_stdout_output(self, process):
-        output = str(process.readAllStandardOutput(), "utf-8").strip()
-        if output:
-            print(colored(f"FFmpeg stdout: {output}", "yellow"))
-
-    def check_ffmpeg(self):
-        """Check if FFmpeg is available in PATH."""
-        try:
-            result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
-            if result.returncode == 0:
-                print(colored(f"FFmpeg version: {result.stdout.splitlines()[0]}", "green"))
-                return True
-            else:
-                print(colored(f"FFmpeg check failed: {result.stderr}", "red"))
-                return False
-        except FileNotFoundError:
-            print(colored("FFmpeg not found in PATH", "red"))
-            return False
-
     def set_video_bitrate_min_max(self):
         match self.video_codec_combo.currentData():
             case 'libx264':
@@ -905,9 +723,6 @@ class VideoSizeReducer(QMainWindow):
 
         self.handle_increase_decrease_audio_bitreate_buttons()
 
-    def handle_output_format(self, index):
-        self.output_format_combo.setCurrentIndex(index)
-
     def increase_audio_bitrate(self):
         new_audio_bitrate = int(self.audio_bitrate_field.text()) + 100
         if new_audio_bitrate > self.max_audio_bit:
@@ -934,22 +749,11 @@ class VideoSizeReducer(QMainWindow):
         video_files, _ = QFileDialog.getOpenFileNames(self, "Select video File", settings.location, "Video Files (*.mp4 *.avi *.mkv)::All Files (*)", options=options)
 
         if video_files:
-            valid_files = []            
-            for f in valid_files:
-                f = os.path.abspath(f)
-                if os.path.exists(f):
-                    valid_files.append(f)
-                else:
-                    print(colored(f"Invalid file path for {f}"), "red")
-            self.video_files = valid_files
-
-        if video_files:
             self.resolution_combo.setEnabled(True)
             self.video_bitrate_field.setEnabled(True)
             self.audio_bitrate_field.setEnabled(True)
             self.video_codec_combo.setEnabled(True)
             self.audio_codec_combo.setEnabled(True)
-            self.output_format_combo.setEnabled(True)
 
             self.set_video_bitrate_min_max()
             self.set_audio_bitrate_min_max()
@@ -970,7 +774,6 @@ class VideoSizeReducer(QMainWindow):
             self.cancel_button.setEnabled(True)
             self.add_video_button.setEnabled(True)
             self.confirm_reduce_button.setEnabled(True)
-            self.preview_button.setEnabled(True)
 
             video_info, audio_info = self.get_video_info(video_files[0])
             self.video_name_text.setText(os.path.basename(video_files[0]))
@@ -1272,7 +1075,6 @@ class VideoSizeReducer(QMainWindow):
 
         self.select_videos_button.setStyleSheet(button_dark_style)
         self.add_video_button.setStyleSheet(button_dark_style)
-        self.preview_button.setStyleSheet(button_dark_style)
         self.confirm_reduce_button.setStyleSheet(button_dark_style)
         self.cancel_button.setStyleSheet(button_dark_style)
         self.exit_button.setStyleSheet(button_dark_style)
@@ -1292,7 +1094,7 @@ class VideoSizeReducer(QMainWindow):
         self.video_bitrate.setStyleSheet("background-color: #262626")
         self.audio_codec.setStyleSheet("background-color: #262626")
         self.audio_bitrate.setStyleSheet("background-color: #262626")
-        self.output_format.setStyleSheet("background-color: #262626")
+
 
 # Reduce the size by:
 # 1 - CRF Adjustment - from 0 to 50
