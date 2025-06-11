@@ -563,13 +563,6 @@ class VideoSizeReducer(QMainWindow):
                         if total_progress_int > self.progress_bar.value():
                             self.progress_bar.setValue(total_progress_int)
 
-                            # Debug print
-                            print(f"Video: {os.path.basename(video)}")
-                            print(f"Time: {time_str} ({seconds:.2f}s)")
-                            print(f"Video Progress: {progress_int}%")
-                            print(f"Total Progress: {total_progress_int}%")
-                            print("---------------------------")
-
             except ValueError as e:
                 print(f"Error in parsing time: {e}")
 
