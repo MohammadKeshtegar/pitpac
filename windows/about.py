@@ -45,6 +45,8 @@ class AboutWindow(QWidget):
 
         self.apply_about_dark_style()
 
+        self.setLayout(layout)
+
     def apply_about_dark_style(self):
         self.setStyleSheet("background-color: #222222")
         self.ok_button.setStyleSheet(button_dark_style)
