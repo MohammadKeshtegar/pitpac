@@ -4,6 +4,10 @@
 
 Pitpac is a python-based application built with Qt. i built this app for my personal use cases such as creating PDFs from images, combining PDFs, resizing images, extracting text from images and reducing video file sizes.
 
+![main-menu](images/main-menu.png)
+![image-preview-window](images/image-preview.png)
+![video-size-reducer](images/video-size-reducer.png)
+
 ## Features
 
 - **Create PDFs**: Generate PDFs from images.
