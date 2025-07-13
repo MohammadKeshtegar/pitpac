@@ -1,0 +1,35 @@
+.base {
+  background-color: #202020;
+}
+
+.button-dark {
+  padding: 5px 10px;
+}
+
+.button-dark:disabled {
+  color: #868686;
+}
+
+.button-dark:hover {
+  background-color: #313131;
+}
+
+.scroll-area-dark {
+  background-color: #525252;
+}
+
+.remove-button-dark {
+  border: 1px solid #404040;
+}
+
+.remove-button-dark:hover {
+  border: 1px solid #868686;
+}
+
+.combobox-dark {
+  background-color: #313131;
+}
+
+.settings-option-dark {
+  background-color: #262626;
+}

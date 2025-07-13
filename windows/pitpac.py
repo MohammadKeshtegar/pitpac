@@ -2,10 +2,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QSt
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt
 
-from utils.styles import button_size, button_dark_style
 from utils.assets import PATH_TO_FILE, settings
+from utils.styles import load_styles
 
-from pages.text_from_image_page import TextFromImagePage
 from pages.image_resizer_page import ImageResizerPage
 from pages.pdf_combiner_page import PDFCombinerPage
 from pages.image_to_pdf_page import Image2PDFPage
@@ -23,13 +22,14 @@ class Pitpac(QMainWindow):
         self.setWindowTitle("Pitpac")
         self.setGeometry(600, 250, 600, 600)
         self.setWindowIcon(QIcon(f'{PATH_TO_FILE}app-icon.png'))
+        self.setProperty("class", "base")
 
         self.initUI()
-
-        self.apply_main_dark_style()
+        load_styles(self)
 
         self.about_window = None
         self.settings_window = None
+        self.current_animation = None
         self.video_size_reducer_window = None
 
     def initUI(self):
@@ -53,10 +53,6 @@ class Pitpac(QMainWindow):
         self.image_resizer_page = ImageResizerPage(self)
         self.stack.addWidget(self.image_resizer_page)
 
-        # Text from image page
-        self.text_from_image_page = TextFromImagePage(self)
-        self.stack.addWidget(self.text_from_image_page)
-
         self.show_main_page()
 
     def setup_main_page(self):
@@ -66,27 +62,32 @@ class Pitpac(QMainWindow):
         self.image2pdf_button = QPushButton('Image to PDF')
         self.pdf_combiner_button = QPushButton("Combine PDFs")
         self.image_resizer_button = QPushButton("Image resizer")
-        self.text_from_image_button = QPushButton("Text from image")
         self.video_size_reducer_button = QPushButton("Video Size Reducer")
         self.settings_button = QPushButton("Settings")
         self.about_button = QPushButton("About")
         self.close_app_button = QPushButton("Exit")
 
+        self.image2pdf_button.setProperty("class", "button-dark")
+        self.pdf_combiner_button.setProperty("class", "button-dark")
+        self.image_resizer_button.setProperty("class", "button-dark")
+        self.video_size_reducer_button.setProperty("class", "button-dark")
+        self.settings_button.setProperty("class", "button-dark")
+        self.about_button.setProperty("class", "button-dark")
+        self.close_app_button.setProperty("class", "button-dark")
+
         # Setting fix size for buttons
-        self.image2pdf_button.setFixedWidth(button_size)
-        self.pdf_combiner_button.setFixedWidth(button_size)
-        self.image_resizer_button.setFixedWidth(button_size)
-        self.text_from_image_button.setFixedWidth(button_size)
-        self.video_size_reducer_button.setFixedWidth(button_size)
-        self.settings_button.setFixedWidth(button_size)
-        self.about_button.setFixedWidth(button_size)
-        self.close_app_button.setFixedWidth(button_size)
+        self.image2pdf_button.setFixedWidth(300)
+        self.pdf_combiner_button.setFixedWidth(300)
+        self.image_resizer_button.setFixedWidth(300)
+        self.video_size_reducer_button.setFixedWidth(300)
+        self.settings_button.setFixedWidth(300)
+        self.about_button.setFixedWidth(300)
+        self.close_app_button.setFixedWidth(300)
 
         # Setting buttons function
         self.pdf_combiner_button.clicked.connect(self.show_pdf_combiner_page)
         self.image2pdf_button.clicked.connect(self.show_img2pdf_page)
         self.image_resizer_button.clicked.connect(self.show_image_resizer_page)
-        self.text_from_image_button.clicked.connect(self.show_text_from_image_page)
         self.video_size_reducer_button.clicked.connect(self.show_video_decrease_size_page)
         self.settings_button.clicked.connect(self.show_settings_window)
         self.about_button.clicked.connect(self.show_about_window)
@@ -95,13 +96,10 @@ class Pitpac(QMainWindow):
         button_container = QWidget()
         button_layout = QVBoxLayout(button_container)
 
-        self.apply_main_dark_style()
-
         # Configuring buttons
         button_layout.addWidget(self.image2pdf_button, alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addWidget(self.pdf_combiner_button, alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addWidget(self.image_resizer_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        button_layout.addWidget(self.text_from_image_button, alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addWidget(self.video_size_reducer_button, alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addWidget(self.settings_button, alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addWidget(self.about_button, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -124,9 +122,6 @@ class Pitpac(QMainWindow):
 
     def show_image_resizer_page(self):
         self.stack.setCurrentWidget(self.image_resizer_page)
-
-    def show_text_from_image_page(self):
-        self.stack.setCurrentWidget(self.text_from_image_page)
 
     def show_video_decrease_size_page(self):
         self.video_size_reducer_window = VideoSizeReducer()
@@ -154,18 +149,6 @@ class Pitpac(QMainWindow):
     def show_settings_window(self):
         self.settings_window = SettingsWindow(self, self.about_window)
         self.settings_window.show()
-
-    # Main styles
-    def apply_main_dark_style(self):
-        self.main_page.setStyleSheet("background: #1e1e1e")
-        self.image2pdf_button.setStyleSheet(button_dark_style)
-        self.image_resizer_button.setStyleSheet(button_dark_style)
-        self.pdf_combiner_button.setStyleSheet(button_dark_style)
-        self.text_from_image_button.setStyleSheet(button_dark_style)
-        self.video_size_reducer_button.setStyleSheet(button_dark_style)
-        self.settings_button.setStyleSheet(button_dark_style)
-        self.about_button.setStyleSheet(button_dark_style)
-        self.close_app_button.setStyleSheet(button_dark_style)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

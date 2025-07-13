@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt
 
 from components.BackButton import BackButton
 
-from utils.styles import button_dark_style, remove_button_dark_style
 from utils.assets import  settings, PATH_TO_FILE
 from utils.notification import notification
 
@@ -18,7 +17,7 @@ class PDFCombinerPage(QMainWindow):
         self.mainWindowObject = mainWindowObject
         self.setObjectName("PDFCombiner")
         self.setup_pdf_combiner_page()
-        
+
     def setup_pdf_combiner_page(self):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -34,6 +33,7 @@ class PDFCombinerPage(QMainWindow):
         # Creating scroll area
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setProperty("class", "scroll-area-dark")
         layout.addWidget(self.scroll_area)
 
         # Creating pdf container
@@ -75,7 +75,10 @@ class PDFCombinerPage(QMainWindow):
         buttons_layout.addWidget(self.button_pdf_combiner_save)
         buttons_layout.setAlignment(self.button_pdf_combiner_save, Qt.AlignRight)
 
-        self.apply_pdf_combiner_dark_style()
+        self.button_pdf_combiner_select.setProperty("class", "button-dark")
+        self.button_pdf_combiner_add.setProperty("class", "button-dark")
+        self.button_pdf_combiner_remove_all.setProperty("class", "button-dark")
+        self.button_pdf_combiner_save.setProperty("class", "button-dark")
 
         self.button_pdf_combiner_select.clicked.connect(self.open_pdf_dialog)
         self.button_pdf_combiner_add.clicked.connect(self.add_pdf)
@@ -108,15 +111,13 @@ class PDFCombinerPage(QMainWindow):
             row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
             row_widget.setLayout(row_layout)
             row_widget.setFixedHeight(120)
-            row_widget.setCursor(Qt.PointingHandCursor)
 
             # Remove button
             remove_button = QPushButton()
             remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             remove_button.setFixedSize(30, 30)
-            remove_button.setStyleSheet(remove_button_dark_style)
+            remove_button.setProperty("class", "remove-button-dark")
             remove_button.clicked.connect(lambda _, f=file: self.remove_pdf(f))
-            row_layout.addWidget(remove_button)
 
             # PDF thumbnail
             label = QLabel()
@@ -131,16 +132,19 @@ class PDFCombinerPage(QMainWindow):
                 else:
                     label.setText("No Preview")
                 print(f"No valid thumbnail generated for {file}")
+            
             label.setFixedSize(100, 100)
             label.setStyleSheet("border: none;")
-            row_layout.addWidget(label)
 
             # PDF name
             name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
-            name_label.setFixedWidth(400)
+            name_label.setFixedWidth(380)
             name_label.setStyleSheet("color: #a3a3a3")
+            
+            row_layout.addWidget(label)
             row_layout.addWidget(name_label)
+            row_layout.addWidget(remove_button)
 
             self.pdf_layout.addWidget(row_widget)
             self.pdf_layout.setAlignment(Qt.AlignTop)
@@ -188,10 +192,7 @@ class PDFCombinerPage(QMainWindow):
                 print(f"Error: Invalid pixmap samples (expected: {expected_samples}, got: {len(pix.samples)}, n: {pix.n}): {pdf_file}")
                 doc.close()
                 return None
-            
-            # Log pixmap details for debugging
-            print(f"Pixmap details for {pdf_file}: width={pix.width}, height={pix.height}, stride={pix.stride}, samples_size={len(pix.samples)}, n={pix.n}")
-            
+
             # Create QImage
             image = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format_RGB888)
             if image.isNull():
@@ -249,12 +250,3 @@ class PDFCombinerPage(QMainWindow):
             self.button_pdf_combiner_add.setEnabled(False)
             self.button_pdf_combiner_remove_all.setEnabled(False)
             self.button_pdf_combiner_save.setEnabled(False)
-
-    # PDF combiner
-    def apply_pdf_combiner_dark_style(self):
-        self.setStyleSheet("QWidget#PDFCombiner { background-color: #262626 } ")
-        self.pdf_container.setStyleSheet("background-color: #333333")
-        self.button_pdf_combiner_select.setStyleSheet(button_dark_style)
-        self.button_pdf_combiner_add.setStyleSheet(button_dark_style)
-        self.button_pdf_combiner_remove_all.setStyleSheet(button_dark_style)
-        self.button_pdf_combiner_save.setStyleSheet(button_dark_style)

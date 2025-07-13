@@ -1,0 +1,20 @@
+.video-reducer-right-sidebar,
+.video-reducer-left-sidebar,
+.center-bottom-buttons-container {
+  background-color: #171717;
+}
+
+.resolution,
+.video-codec,
+.video-bitrate,
+.audio-codec,
+.audio-bitrate,
+.video-name-box,
+.video-info-box,
+.audio-info-box {
+  background-color: #262626;
+}
+
+.progressbar {
+  background-color: #fff;
+}

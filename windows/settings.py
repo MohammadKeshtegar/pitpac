@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from qtwidgets import Toggle
 
 from utils.assets import save_theme_preference, settings, START_LOCATION
-from utils.styles import button_dark_style, settings_option_dark_style
+# from utils.styles import button_dark_style, settings_option_dark_style
 
 import sys
 import os
@@ -168,12 +168,13 @@ class SettingsWindow(QWidget):
             save_theme_preference()
     
     def update_style(self):
-        self.settings_dark_style()
+        # self.settings_dark_style()
+        pass
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
 
-        self.settings_dark_style()
+        # self.settings_dark_style()
         save_theme_preference()
 
         self.update_style()
@@ -183,15 +184,15 @@ class SettingsWindow(QWidget):
         python = sys.executable
         os.execl(python, python, * sys.argv)
 
-    def settings_dark_style(self):
-        self.setStyleSheet("background-color: #1e1e1e")
-        self.location_widget.setStyleSheet(settings_option_dark_style)
-        self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-        self.browse_location_button.setStyleSheet(button_dark_style)
-        self.font_family_widget.setStyleSheet(settings_option_dark_style)
-        self.font_size_widget.setStyleSheet(settings_option_dark_style)
-        self.font_combo.setStyleSheet("background-color: #3e3e3e")
-        self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
-        self.image_preview.setStyleSheet(settings_option_dark_style)
-        self.reset_button.setStyleSheet(button_dark_style)
-        self.ok_button.setStyleSheet(button_dark_style)
+    # def settings_dark_style(self):
+    #     self.setStyleSheet("background-color: #1e1e1e")
+    #     self.location_widget.setStyleSheet(settings_option_dark_style)
+    #     self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
+    #     self.browse_location_button.setStyleSheet(button_dark_style)
+    #     self.font_family_widget.setStyleSheet(settings_option_dark_style)
+    #     self.font_size_widget.setStyleSheet(settings_option_dark_style)
+    #     self.font_combo.setStyleSheet("background-color: #3e3e3e")
+    #     self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
+    #     self.image_preview.setStyleSheet(settings_option_dark_style)
+    #     self.reset_button.setStyleSheet(button_dark_style)
+    #     self.ok_button.setStyleSheet(button_dark_style)

@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt
 
 from components.BackButton import BackButton
 
-from utils.styles import button_dark_style, remove_button_dark_style
 from utils.assets import settings, PATH_TO_FILE
 from utils.notification import notification
 
@@ -30,11 +29,14 @@ class Image2PDFPage(QMainWindow):
         # Creating scroll area
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setProperty("class", "scroll-area-dark")
 
         # Creating image container
         self.image_container = QWidget()
         self.image_layout = QVBoxLayout(self.image_container)
         self.image_container.setLayout(self.image_layout)
+        self.image_container.setProperty("class", "image-container-dark")
+
         self.scroll_area.setWidget(self.image_container)
 
         # Creating buttons container
@@ -61,6 +63,11 @@ class Image2PDFPage(QMainWindow):
         self.button_img_to_pdf_save = QPushButton("Convert to PDF")
         self.button_img_to_pdf_save.setEnabled(False)
 
+        self.button_img_to_pdf_select.setProperty("class", "button-dark")
+        self.button_img_to_pdf_add.setProperty("class", "button-dark")
+        self.button_img_to_pdf_remove_all.setProperty("class", "button-dark")
+        self.button_img_to_pdf_save.setProperty("class", "button-dark")
+
         self.button_img_to_pdf_select.clicked.connect(self.selectImage)
         self.button_img_to_pdf_add.clicked.connect(self.add_images)
         self.button_img_to_pdf_remove_all.clicked.connect(self.remove_all_images)
@@ -76,7 +83,6 @@ class Image2PDFPage(QMainWindow):
         layout.addWidget(self.scroll_area)
         layout.addWidget(self.buttons_container)
 
-        self.apply_img_to_pdf_dark_style()
         self.image_files = []
 
     def add_images(self):
@@ -105,10 +111,7 @@ class Image2PDFPage(QMainWindow):
 
             row_widget.setLayout(row_layout)
             row_widget.setFixedHeight(120)
-
-            remove_button = QPushButton()
-            remove_button.setFixedSize(30, 30)
-            remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))
+            row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
 
             label = QLabel()
             pixmap = QPixmap(file)
@@ -117,15 +120,17 @@ class Image2PDFPage(QMainWindow):
             name_label = QLabel(os.path.basename(file))
             name_label.setWordWrap(True)
             name_label.setFixedWidth(380)
-
-            row_widget.setStyleSheet("background-color: #202020; border-radius: 4px")
-            remove_button.setStyleSheet(remove_button_dark_style)
-            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
             name_label.setStyleSheet("color: #a3a3a3")
 
-            row_layout.addWidget(remove_button)
+            remove_button = QPushButton()
+            remove_button.setFixedSize(30, 30)
+            remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))
+            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
+            remove_button.setProperty("class", "remove-button-dark")
+
             row_layout.addWidget(label)
             row_layout.addWidget(name_label)
+            row_layout.addWidget(remove_button)
 
             layout.addWidget(row_widget)
             layout.setAlignment(Qt.AlignTop)
@@ -155,13 +160,4 @@ class Image2PDFPage(QMainWindow):
             self.button_img_to_pdf_save.setEnabled(True)
             self.button_img_to_pdf_remove_all.setEnabled(True)
             self.button_img_to_pdf_add.setEnabled(True)
-
-    # Img to pdf styles
-    def apply_img_to_pdf_dark_style(self):
-        self.image_container.setStyleSheet("background-color: #333333")
-        self.button_img_to_pdf_select.setStyleSheet(button_dark_style)
-        self.button_img_to_pdf_add.setStyleSheet(button_dark_style)
-        self.button_img_to_pdf_remove_all.setStyleSheet(button_dark_style)
-        self.button_img_to_pdf_save.setStyleSheet(button_dark_style)
-        self.setStyleSheet("QWidget#Image2PDF { background-color: #262626 } ")
 
