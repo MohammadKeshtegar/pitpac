@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 from components.BackButton import BackButton
 
-from utils.assets import settings, PATH_TO_FILE
+from utils.assets import settings, PATH_TO_ICON_FILE
 from utils.notification import notification
 
 import img2pdf
@@ -125,7 +125,7 @@ class Image2PDFPage(QMainWindow):
             remove_button = QPushButton()
             remove_button.setFixedSize(30, 30)
             remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))
-            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
+            remove_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}x-dark.svg"))
             remove_button.setProperty("class", "remove-button-dark")
 
             row_layout.addWidget(label)

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QScrollArea, QLabel, QVBoxLayout, QWidget, QMainWind
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QIcon, QPainter
 
-from utils.assets import PATH_TO_FILE
+from utils.assets import PATH_TO_ICON_FILE
 # from utils.styles import button_dark_style
 
 class ImageDisplayWindow(QMainWindow): 
@@ -89,8 +89,8 @@ class ImageDisplayWindow(QMainWindow):
         self.update_image_view()
 
     def apply_icon_theme(self):
-        self.zoom_in_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
-        self.zoom_out_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
+        self.zoom_in_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}plus-bold-dark.svg"))
+        self.zoom_out_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}minus-bold-dark.svg"))
 
     # def apply_image_preview_dark_style(self):
     #     self.setStyleSheet("QWidget#ImagePreview { background-color: #262626 } ")

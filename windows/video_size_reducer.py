@@ -6,7 +6,7 @@ from PIL import Image
 from termcolor import colored
 
 from utils.guides import RESOLUTION_GUIDE, VIDEO_CODEC_GUIDE, VIDEO_BITRATE_GUIDE, AUDIO_BITRATE_GUIDE, AUDIO_CODEC_GUIDE
-from utils.assets import settings, PATH_TO_FILE
+from utils.assets import settings, PATH_TO_ICON_FILE
 from utils.styles import load_styles
 
 import subprocess
@@ -498,7 +498,7 @@ class VideoSizeReducer(QMainWindow):
 
         row_widget.setStyleSheet("background-color: #202020")
         open_folder_button.setStyleSheet(button_dark_style)
-        open_folder_button.setIcon(QIcon(f"{PATH_TO_FILE}folder-simple-fill-dark.svg"))
+        open_folder_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}folder-simple-fill-dark.svg"))
 
         row_layout.addWidget(info_container)
         row_layout.addStretch()
@@ -850,7 +850,7 @@ class VideoSizeReducer(QMainWindow):
 
             name_label.setStyleSheet("color: #a3a3a3")
             remove_button.setProperty("class", "remove-button-dark")
-            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
+            remove_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}x-dark.svg"))
 
             row_layout.addWidget(name_label)
             row_layout.addWidget(remove_button)
@@ -1069,10 +1069,10 @@ class VideoSizeReducer(QMainWindow):
         self.audio_bitrate_info_message_box.exec()
 
     def apply_icon_style(self):
-        self.increase_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
-        self.decrease_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
-        self.increase_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}plus-bold-dark.svg"))
-        self.decrease_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_FILE}minus-bold-dark.svg"))
+        self.increase_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}plus-bold-dark.svg"))
+        self.decrease_video_bitrate_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}minus-bold-dark.svg"))
+        self.increase_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}plus-bold-dark.svg"))
+        self.decrease_audio_bitrate_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}minus-bold-dark.svg"))
 
 # Reduce the size by:
 # 1 - CRF Adjustment - from 0 to 50

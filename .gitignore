@@ -3,4 +3,4 @@ __pycache__
 pitpac.spec
 build/
 dist/
-setup.py
+Pitpac.spec

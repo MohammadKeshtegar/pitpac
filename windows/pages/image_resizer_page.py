@@ -6,7 +6,7 @@ from PIL import Image
 from image_preview import ImageDisplayWindow
 from components.BackButton import BackButton
 
-from utils.assets import PATH_TO_FILE, settings
+from utils.assets import PATH_TO_ICON_FILE, settings
 from utils.notification import notification
 
 import io
@@ -142,7 +142,7 @@ class ImageResizerPage(QMainWindow):
             name_label.setStyleSheet("color: #a3a3a3")
 
             remove_button = QPushButton()
-            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
+            remove_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}x-dark.svg"))
             remove_button.setFixedSize(30, 30)
             remove_button.setProperty("class", "remove-button-dark")          
             remove_button.clicked.connect(lambda _, f=file: self.remove_image(layout, f))

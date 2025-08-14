@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 from components.BackButton import BackButton
 
-from utils.assets import  settings, PATH_TO_FILE
+from utils.assets import  settings, PATH_TO_ICON_FILE
 from utils.notification import notification
 
 import PyPDF4
@@ -114,7 +114,7 @@ class PDFCombinerPage(QMainWindow):
 
             # Remove button
             remove_button = QPushButton()
-            remove_button.setIcon(QIcon(f"{PATH_TO_FILE}x-dark.svg"))
+            remove_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}x-dark.svg"))
             remove_button.setFixedSize(30, 30)
             remove_button.setProperty("class", "remove-button-dark")
             remove_button.clicked.connect(lambda _, f=file: self.remove_pdf(f))
@@ -126,7 +126,7 @@ class PDFCombinerPage(QMainWindow):
                 label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio))
             else:
                 # Fallback to generic PDF icon
-                icon_path = f"{PATH_TO_FILE}pdf-icon.png"  # Replace with your icon path
+                icon_path = f"{PATH_TO_ICON_FILE}pdf-icon.png"  # Replace with your icon path
                 if os.path.exists(icon_path):
                     label.setPixmap(QPixmap(icon_path).scaled(100, 100, Qt.KeepAspectRatio))
                 else:

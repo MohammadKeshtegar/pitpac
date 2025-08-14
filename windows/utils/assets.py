@@ -1,11 +1,18 @@
 from PyQt5.QtCore import QSettings
 from dotenv import load_dotenv
+import sys
 import os
 
 load_dotenv()
 
-PATH_TO_FILE = os.getenv("PATH_TO_FILE")
-START_LOCATION = os.getenv("START_LOCATION")
+# Try to get the environment variables
+if sys.executable.endswith('Pitpac'):
+    PATH_TO_ICON_FILE = os.getenv("PATH_TO_ICON_FILE")
+    START_LOCATION = os.getenv("START_LOCATION")
+
+elif os.getenv("PATH_TO_ICON_FILE") is not None and os.getenv("START_LOCATION") is not None:
+    PATH_TO_ICON_FILE = os.getenv("PATH_TO_ICON_FILE")
+    START_LOCATION = os.getenv("START_LOCATION")
 
 def handle_back_button(self):
     self.stack.setCurrentWidget(self.main_page)

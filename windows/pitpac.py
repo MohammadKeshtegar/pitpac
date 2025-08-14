@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QSt
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt
 
-from utils.assets import PATH_TO_FILE, settings
+from utils.assets import PATH_TO_ICON_FILE, settings
 from utils.styles import load_styles
 
 from pages.image_resizer_page import ImageResizerPage
@@ -21,7 +21,7 @@ class Pitpac(QMainWindow):
 
         self.setWindowTitle("Pitpac")
         self.setGeometry(600, 250, 600, 600)
-        self.setWindowIcon(QIcon(f'{PATH_TO_FILE}app-icon.png'))
+        self.setWindowIcon(QIcon(f'{PATH_TO_ICON_FILE}app-icon.png'))
         self.setProperty("class", "base")
 
         self.initUI()
