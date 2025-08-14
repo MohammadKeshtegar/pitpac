@@ -5,8 +5,10 @@ import os
 
 load_dotenv()
 
+
 # Try to get the environment variables
 if sys.executable.endswith('Pitpac'):
+    load_dotenv(dotenv_path=f"{os.path.dirname(sys.executable)}/../.env")
     PATH_TO_ICON_FILE = os.getenv("PATH_TO_ICON_FILE")
     START_LOCATION = os.getenv("START_LOCATION")
 
