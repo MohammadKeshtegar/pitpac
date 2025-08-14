@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout, QSizePolicy
 from PyQt5.QtCore import Qt
 
-# from utils.styles import button_dark_style
+from utils.styles import load_styles
 
 class AboutWindow(QWidget):
     def __init__(self):
@@ -9,6 +9,8 @@ class AboutWindow(QWidget):
 
         self.setWindowTitle("About Pitpac")
         self.setGeometry(1100, 400, 700, 300)
+        self.setProperty("class", "about")
+        load_styles(self)
 
         self.about_text = """
             <p style='font-size:16px'>Pitpac is a desktop application allows you to convert images to pdf files or cobine pdf files into one pdf file.</p>
@@ -35,7 +37,8 @@ class AboutWindow(QWidget):
 
         self.ok_button = QPushButton("Ok", self)
         self.ok_button.setFixedWidth(100)
-        self.ok_button.clicked.connect(self.close_about)
+        self.ok_button.clicked.connect(lambda: self.close())
+        self.ok_button.setProperty("class", "button-dark")
 
         layout.addStretch(1)
         layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -43,13 +46,4 @@ class AboutWindow(QWidget):
 
         layout.addWidget(self.ok_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # self.apply_about_dark_style()
-
         self.setLayout(layout)
-
-    # def apply_about_dark_style(self):
-    #     self.setStyleSheet("background-color: #222222")
-    #     self.ok_button.setStyleSheet(button_dark_style)
-
-    def close_about(self):
-        self.close()

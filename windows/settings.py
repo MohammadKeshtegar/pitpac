@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from qtwidgets import Toggle
 
 from utils.assets import save_theme_preference, settings, START_LOCATION
-# from utils.styles import button_dark_style, settings_option_dark_style
+from utils.styles import load_styles
 
 import sys
 import os
@@ -15,11 +15,13 @@ class SettingsWindow(QWidget):
 
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 400, 400)
+        self.setProperty("class", "settings")
         self.mainWindowObject = mainWindowObject
         self.aboutWindowObject = aboutWindowObject
         self.new_font_family = None
         self.new_font_size = None
         
+        load_styles(self)
         self.initUI()
 
     def initUI(self):
@@ -34,6 +36,7 @@ class SettingsWindow(QWidget):
         self.location_widget = QWidget()
         location_layout = QHBoxLayout()
         self.location_widget.setLayout(location_layout)
+        self.location_widget.setProperty("class", "settings-option-dark")
 
         self.location_field = QLineEdit(settings.location, self)
         self.location_field.setMinimumWidth(200)
@@ -50,6 +53,7 @@ class SettingsWindow(QWidget):
         self.font_family_widget = QWidget()
         font_family_layout = QHBoxLayout()
         self.font_family_widget.setLayout(font_family_layout)
+        self.font_family_widget.setProperty("class", "settings-option-dark")
 
         self.font_label = QLabel("Select Font", self)
         self.font_combo = QFontComboBox(self)
@@ -70,6 +74,7 @@ class SettingsWindow(QWidget):
         self.font_size_widget = QWidget()
         font_size_layout = QHBoxLayout()
         self.font_size_widget.setLayout(font_size_layout)
+        self.font_size_widget.setProperty("class", "settings-option-dark")
 
         self.font_size_label = QLabel("Font Size", self)
         self.font_size_spin = QSpinBox(self)
@@ -87,6 +92,7 @@ class SettingsWindow(QWidget):
         self.image_preview = QWidget()
         image_preview_layout = QHBoxLayout()
         self.image_preview.setLayout(image_preview_layout)
+        self.image_preview.setProperty("class", "settings-option-dark")
 
         self.image_preview_label = QLabel("Show image preview", self)
 
@@ -105,12 +111,13 @@ class SettingsWindow(QWidget):
         self.ok_button = QPushButton("Ok")
         self.ok_button.setFixedWidth(100)
         self.ok_button.clicked.connect(self.ok_click)
+        self.ok_button.setProperty("class", "button-dark")
 
         self.reset_button = QPushButton("Reset")
         self.reset_button.setFixedWidth(100)
         self.reset_button.clicked.connect(self.reset_click)
+        self.reset_button.setProperty("class", "button-dark")
 
-        # settings_options_layout.addWidget(self.toggle_mode_widget)
         settings_options_layout.addWidget(self.image_preview)
         settings_options_layout.addWidget(self.location_widget)
         settings_options_layout.addWidget(self.font_family_widget)
@@ -168,13 +175,11 @@ class SettingsWindow(QWidget):
             save_theme_preference()
     
     def update_style(self):
-        # self.settings_dark_style()
         pass
 
     def switch_mode(self, state):
         settings.mode = "dark" if state == 2 else "light"
 
-        # self.settings_dark_style()
         save_theme_preference()
 
         self.update_style()
@@ -184,15 +189,3 @@ class SettingsWindow(QWidget):
         python = sys.executable
         os.execl(python, python, * sys.argv)
 
-    # def settings_dark_style(self):
-    #     self.setStyleSheet("background-color: #1e1e1e")
-    #     self.location_widget.setStyleSheet(settings_option_dark_style)
-    #     self.location_field.setStyleSheet("border: none; background-color: #3e3e3e; border-radius: 3px; padding: 3px 6px; color: #d4d4d4")
-    #     self.browse_location_button.setStyleSheet(button_dark_style)
-    #     self.font_family_widget.setStyleSheet(settings_option_dark_style)
-    #     self.font_size_widget.setStyleSheet(settings_option_dark_style)
-    #     self.font_combo.setStyleSheet("background-color: #3e3e3e")
-    #     self.font_size_spin.setStyleSheet("background-color: #3e3e3e")
-    #     self.image_preview.setStyleSheet(settings_option_dark_style)
-    #     self.reset_button.setStyleSheet(button_dark_style)
-    #     self.ok_button.setStyleSheet(button_dark_style)

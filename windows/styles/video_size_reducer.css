@@ -11,10 +11,8 @@
 .audio-bitrate,
 .video-name-box,
 .video-info-box,
-.audio-info-box {
+.audio-info-box,
+.general-info,
+.process-info {
   background-color: #262626;
-}
-
-.progressbar {
-  background-color: #fff;
 }

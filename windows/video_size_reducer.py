@@ -272,7 +272,7 @@ class VideoSizeReducer(QMainWindow):
 
         self.general_info = QWidget()
         self.general_info_layout = QVBoxLayout(self.general_info)
-        self.general_info.setStyleSheet("background-color: #262626")
+        self.general_info.setProperty("class", "general-info")
 
         self.selected_videos = QLabel("Selected videos: ")
         self.total_size = QLabel("Total size: ")
@@ -283,11 +283,13 @@ class VideoSizeReducer(QMainWindow):
         self.process_info = QWidget()
         self.process_info.setStyleSheet("background-color: #262626")
         self.process_info_layout = QVBoxLayout(self.process_info)
+        self.process_info.setProperty("class", "process-info")
 
         self.finished_videos = QLabel("Done: ")
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setProperty("class", "progressbar")
+        self.progress_bar.setStyleSheet("QProgressBar { background-color: #363636 }")
 
         self.process_info_layout.addWidget(self.finished_videos)
         self.process_info_layout.addWidget(self.progress_bar)
@@ -386,8 +388,6 @@ class VideoSizeReducer(QMainWindow):
         self.main_layout.addWidget(self.right_widget)
 
         self.setCentralWidget(self.main_layout)
-
-        # self.apply_video_decrease_size_dark_theme()
         
         self.video_files = []
 
@@ -497,8 +497,8 @@ class VideoSizeReducer(QMainWindow):
         self.process_items[video_path] = { "progressbar": progressbar, "button": open_folder_button, "percentage_label": percentage_label }
 
         row_widget.setStyleSheet("background-color: #202020")
-        open_folder_button.setStyleSheet(button_dark_style)
         open_folder_button.setIcon(QIcon(f"{PATH_TO_ICON_FILE}folder-simple-fill-dark.svg"))
+        open_folder_button.setProperty("class", "button-dark")
 
         row_layout.addWidget(info_container)
         row_layout.addStretch()
